@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Bengkel TKR - Official Service</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #eef2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        /* Container Aplikasi Berbentuk Frame HP / App */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            overflow: hidden;
+            position: relative;
+            min-height: 650px;
+        }
+
+        /* Top Bar Branding */
+        .top-navbar {
+            background: #111827;
+            color: #ffffff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .top-navbar .brand {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Style Halaman */
+        .page {
+            display: none;
+            padding: 24px 20px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* LAMAN 1: WELCOME SCREEN */
+        .hero-banner {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 15px;
+        }
+        .hero-banner h1 {
+            font-size: 22px;
+            color: #1f2937;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .hero-banner p {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-btn {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .card-btn:hover {
+            border-color: #2563eb;
+            background: #f8fafc;
+            transform: translateY(-2px);
+        }
+        .card-btn .icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .card-btn.primary .icon {
+            background: #2563eb;
+            color: #fff;
+        }
+        .card-btn.secondary .icon {
+            background: #25d366;
+            color: #fff;
+        }
+        .card-btn .info h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .card-btn .info p {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        /* LAMAN 2: FORM PEMERIKSAAN */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            background: #f3f4f6;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #374151;
+        }
+        .page-header h2 {
+            font-size: 18px;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .form-group textarea {
+            resize: vertical;
+            height: 70px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover {
+            background: #1d4ed8;
+        }
+
+        /* RINGKASAN BUKTI PEMERIKSAAN */
+        .summary-card {
+            display: none;
+            margin-top: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .summary-card h3 {
+            font-size: 15px;
+            color: #1e293b;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-item {
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #475569;
+        }
+        .summary-item strong {
+            color: #0f172a;
+        }
+        .badge-status {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+            font-size: 11px;
+            border-radius: 20px;
+        }
+
+        /* Footer App */
+        .app-footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 11px;
+            color: #9ca3af;
+            border-top: 1px solid #f3f4f6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Top Branding Bar -->
+    <div class="top-navbar">
+        <div class="brand">
+            <i class="fa-solid fa-gear"></i> TKR AutoService
+        </div>
+        <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i>
+    </div>
+
+    <!-- LAMAN 1: SELAMAT DATANG & PILIHAN NAVIGASI -->
+    <div id="pageWelcome" class="page active">
+        <div class="hero-banner">
+            <div class="hero-icon">
+                <i class="fa-solid fa-car-side"></i>
+            </div>
+            <h1>Selamat Datang!</h1>
+            <p>Sistem Layanan Pemeriksaan & Perawatan Kendaraan Berbasis Digital - TKR Service Center</p>
+        </div>
+
+        <div class="menu-options">
+            <!-- Pilihan 1: Lanjut Isi Form Data Kendaraan -->
+            <div class="card-btn primary" onclick="navigateTo('pageForm')">
+                <div class="icon">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div class="info">
+                    <h3>Pemeriksaan Kendaraan</h3>
+                    <p>Isi data & gejala kerusakan untuk jadwal pemeriksaan</p>
+                </div>
+            </div>
+
+            <!-- Pilihan 2: Konsultasi ke Mekanik via Link WhatsApp QR / Nomor 085700105088 -->
+            <a href="https://wa.me/qr/EXJJCHO57E6EJ1" target="_blank" class="card-btn secondary" onclick="fallbackWa(event, this)">
+                <div class="icon">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div class="info">
+                    <h3>Konsultasi Mekanik</h3>
+                    <p>Hubungi mekanik via WhatsApp (085700105088)</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- LAMAN 2: FORM ISI DATA & KELUHAN MOBIL -->
+    <div id="pageForm" class="page">
+        <div class="page-header">
+            <button class="btn-back" onclick="navigateTo('pageWelcome')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2>Form Data Kendaraan</h2>
+        </div>
+
+        <form id="inspectionForm" onsubmit="submitForm(event)">
+            <div class="form-group">
+                <label><i class="fa-solid fa-user"></i> Nama Pemilik</label>
+                <input type="text" id="nama" placeholder="Masukkan nama lengkap" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-location-dot"></i> Alamat</label>
+                <input type="text" id="alamat" placeholder="Masukkan alamat tinggal" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-id-card"></i> Nomor Kendaraan (Plat)</label>
+                <input type="text" id="nopol" placeholder="Contoh: AA 1234 AB" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-triangle-exclamation"></i> Gejala / Indikasi Awal</label>
+                <select id="gejala" required>
+                    <option value="">-- Pilih Gejala Utama --</option>
+                    <option value="Mesin Kasar / Brebet">Mesin Kasar / Brebet</option>
+                    <option value="Sistem Rem Kurang Pakem">Sistem Rem Kurang Pakem / Bunyi</option>
+                    <option value="Aki Lemah / Sulit Starter">Aki Lemah / Sulit Starter</option>
+                    <option value="Kemudi / Setir Bergetar">Kemudi / Setir Bergetar</option>
+                    <option value="AC Tidak Dingin">Sistem AC Tidak Dingin</option>
+                    <option value="Servis Berkala / Rutin">Servis Berkala / Rutin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-comment-dots"></i> Catatan Tambahan Masalah</label>
+                <textarea id="catatan" placeholder="Tuliskan detail masalah atau riwayat kendala kendaraan..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-paper-plane"></i> Kirim Data Pemeriksaan
+            </button>
+        </form>
+
+        <!-- Ringkasan Hasil Form -->
+        <div class="summary-card" id="summaryCard">
+            <h3><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Ticket Pemeriksaan Dibuat</h3>
+            <div class="summary-item"><strong>Pemilik:</strong> <span id="resNama"></span></div>
+            <div class="summary-item"><strong>Alamat:</strong> <span id="resAlamat"></span></div>
+            <div class="summary-item"><strong>Plat Nomor:</strong> <span id="resNopol"></span></div>
+            <div class="summary-item"><strong>Gejala Utama:</strong> <span id="resGejala"></span></div>
+            <div class="summary-item"><strong>Catatan:</strong> <span id="resCatatan"></span></div>
+            <span class="badge-status">Status: Menunggu Antrean Mekanik</span>
+        </div>
+    </div>
+
+    <!-- Footer App -->
+    <div class="app-footer">
+        &copy; 2026 TKR AutoService System &bull; Versi 2.0
+    </div>
+</div>
+
+<script>
+    // Fungsi berpindah halaman
+    function navigateTo(pageId) {
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    // Fungsi submit form data kendaraan
+    function submitForm(event) {
+        event.preventDefault();
+
+        const nama = document.getElementById('nama').value;
+        const alamat = document.getElementById('alamat').value;
+        const nopol = document.getElementById('nopol').value;
+        const gejala = document.getElementById('gejala').value;
+        const catatan = document.getElementById('catatan').value || '-';
+
+        document.getElementById('resNama').innerText = nama;
+        document.getElementById('resAlamat').innerText = alamat;
+        document.getElementById('resNopol').innerText = nopol;
+        document.getElementById('resGejala').innerText = gejala;
+        document.getElementById('resCatatan').innerText = catatan;
+
+        document.getElementById('summaryCard').style.display = 'block';
+        document.getElementById('inspectionForm').style.display = 'none';
+    }
+
+    // Penanganan tautan WhatsApp dengan fallback ke nomor 085700105088
+    function fallbackWa(event, element) {
+        // Apabila link QR bermasalah atau dibuka di browser tertentu, otomatis beralih ke nomor WA langsung
+        setTimeout(() => {
+            if (document.hidden) return;
+            window.location.href = "https://wa.me/6285700105088?text=Halo%20Mekanik%20TKR,%20saya%20ingin%20konsultasi%20mengenai%20kendaraan%20saya.";
+        }, 1500);
+    }
+</script>
+
+</body>
+</html>
