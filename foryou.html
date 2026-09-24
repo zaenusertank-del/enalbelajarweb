@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Untuk Kamu ❤️</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Card Utama */
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(5px);
+      padding: 35px 25px;
+      border-radius: 25px;
+      box-shadow: 0 15px 35px rgba(255, 107, 129, 0.2);
+      max-width: 380px;
+      width: 90%;
+      position: relative;
+      z-index: 10;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Animasi Stiker/Emoji */
+    .emoji-icon {
+      font-size: 60px;
+      margin-bottom: 15px;
+      display: inline-block;
+      animation: bounce 2s infinite;
+    }
+
+    h2 {
+      color: #ff4757;
+      font-size: 20px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    p {
+      color: #555;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    /* Tombol Style */
+    .btn {
+      background: linear-gradient(45deg, #ff6b81, #ff4757);
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+      transition: transform 0.2s ease, background 0.2s ease;
+      outline: none;
+    }
+
+    .btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(255, 71, 87, 0.6);
+    }
+
+    /* Kontainer Tombol Berdampingan/Jejeran */
+    .btn-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px; /* Jarak sejajar antara tombol Mau dan Enggak */
+      margin-top: 20px;
+      min-height: 60px;
+    }
+
+    /* Tombol "Enggak" Styling */
+    #btnEnggak {
+      background: #a4b0be;
+      box-shadow: 0 5px 15px rgba(164, 176, 190, 0.4);
+      transition: all 0.2s ease;
+      z-index: 99;
+    }
+
+    /* Menyembunyikan Elemen */
+    .hidden {
+      display: none !important;
+    }
+
+    /* YouTube Player Rahasia */
+    #yt-player {
+      display: none;
+    }
+
+    /* Animasi Hati Terbang di Background */
+    .heart-bg {
+      position: absolute;
+      color: rgba(255, 107, 129, 0.3);
+      font-size: 20px;
+      animation: floatUp 5s linear infinite;
+      z-index: 1;
+      bottom: -30px;
+    }
+
+    /* Keyframes Animasi */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pemutar Musik Rahasia dari YouTube -->
+  <div id="yt-player"></div>
+
+  <!-- HALAMAN 1: Peringatan Play Lagu -->
+  <div id="halaman1" class="card">
+    <div class="emoji-icon">🎧✨</div>
+    <h2>Hai Kamu!</h2>
+    <p>Sebelum kita lanjut, aku mau kamu putar musiknya dulu ya biar makin dapet suasananya... 💖</p>
+    <button class="btn" onclick="playMusikYT()">▶ Putar Lagu Dulu Ya</button>
+  </div>
+
+  <!-- HALAMAN 2: Lagu Mulai + Lanjut -->
+  <div id="halaman2" class="card hidden">
+    <div class="emoji-icon">🎶🌸</div>
+    <h2>Dengar Musiknya Kan?</h2>
+    <p>Sambil dengerin lagunya, ada sesuatu yang mau aku sampaikan ke kamu...</p>
+    <button class="btn" onclick="pindahHalaman('halaman2', 'halaman3')">Lanjut ➔</button>
+  </div>
+
+  <!-- HALAMAN 3: Ungkapan Perasaan -->
+  <div id="halaman3" class="card hidden">
+    <div class="emoji-icon">💌✨</div>
+    <h2>Jujur Dari Hati...</h2>
+    <p>Sejak pertama kenal kamu, hari-hariku rasanya lebih berwarna. Senyum kamu selalu berhasil bikin hariku yang biasa jadi indah banget. 😊❤️</p>
+    <button class="btn" onclick="pindahHalaman('halaman3', 'halaman4')">Lanjut Lagi ✨</button>
+  </div>
+
+  <!-- HALAMAN 4: Pertanyaan & Tombol Jejeran -->
+  <div id="halaman4" class="card hidden">
+    <div class="emoji-icon">🙈👉👈</div>
+    <h2>Satu Pertanyaan Penting...</h2>
+    <p><strong>Kamu mau enggak jadi crush aku? 🥺✨</strong></p>
+    <div class="btn-container">
+      <button class="btn" onclick="pindahHalaman('halaman4', 'halaman5')">Mau! ❤️</button>
+      <button class="btn" id="btnEnggak" onmouseover="kabur()" onclick="kabur()">Enggak 😜</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 5: Akhir / Terima Kasih -->
+  <div id="halaman5" class="card hidden">
+    <div class="emoji-icon">🥰🎉</div>
+    <h2>Makasih Banyak Ya! ❤️</h2>
+    <p>Makasih udah mau jadi crush aku! Semoga hari-hari kita makin bahagia terus ya. I'm so happy today! 💖✨</p>
+  </div>
+
+  <!-- Script YouTube API & Logika Interaktif -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    var player;
+    // ID Video YouTube dari link kamu (1XulRzFnTYE)
+    var youtubeID = '1XulRzFnTYE'; 
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: youtubeID,
+        playerVars: {
+          'playsinline': 1,
+          'loop': 1,
+          'playlist': youtubeID
+        }
+      });
+    }
+
+    // Fungsi Memutar Musik
+    function playMusikYT() {
+      if (player && player.playVideo) {
+        player.playVideo();
+      }
+      pindahHalaman('halaman1', 'halaman2');
+    }
+
+    // Fungsi Pindah Halaman Card
+    function pindahHalaman(dari, ke) {
+      document.getElementById(dari).classList.add("hidden");
+      document.getElementById(ke).classList.remove("hidden");
+    }
+
+    // Fungsi Tombol "Enggak" Kabur/Membesar saat ditunjuk
+    function kabur() {
+      var btn = document.getElementById("btnEnggak");
+      
+      // Mengubah posisi tombol jadi melayang HANYA saat disentuh/ditunjuk
+      btn.style.position = "fixed";
+
+      // Hitung koordinat acak agar tidak keluar dari layar HP/Laptop
+      var x = Math.random() * (window.innerWidth - btn.offsetWidth - 50);
+      var y = Math.random() * (window.innerHeight - btn.offsetHeight - 50);
+
+      btn.style.left = Math.max(20, x) + "px";
+      btn.style.top = Math.max(20, y) + "px";
+    }
+
+    // Efek Hati Berterbangan di Background
+    function buatHati() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart-bg');
+      heart.innerHTML = ['❤️', '💖', '✨', '🌸', '💕'][Math.floor(Math.random() * 5)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = Math.random() * 3 + 3 + 's';
+      document.body.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 5000);
+    }
+
+    setInterval(buatHati, 400);
+  </script>
+
+</body>
+</html>
