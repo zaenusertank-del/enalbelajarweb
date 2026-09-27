@@ -1,0 +1,129 @@
+100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pemutar Musik Rahasia dari YouTube -->
+  <div id="yt-player"></div>
+
+  <!-- HALAMAN 1: Peringatan Play Lagu -->
+  <div id="halaman1" class="card">
+    <div class="emoji-icon">
+      <img src="https://share.google/9IbCSprXJOFm6tj2B" alt="Foto Halaman 1" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+    </div>
+    <h2>Hai Kamu!</h2>
+    <p>Sebelum kita lanjut, aku mau kamu putar musiknya dulu ya biar makin dapet suasananya... 💖</p>
+    <button class="btn" onclick="playMusikYT()">▶ Putar Lagu Dulu Ya</button>
+  </div>
+
+  <!-- HALAMAN 2: Lagu Mulai + Lanjut -->
+  <div id="halaman2" class="card hidden">
+    <div class="emoji-icon">
+      <img src="https://share.google/n3rJA9eRE8Zb1XhFA" alt="Foto Halaman 2" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+    </div>
+    <h2>Dengar Musiknya Kan?</h2>
+    <p>Sambil dengerin lagunya, ada sesuatu yang mau aku sampaikan ke kamu...</p>
+    <button class="btn" onclick="pindahHalaman('halaman2', 'halaman3')">Lanjut ➔</button>
+  </div>
+
+  <!-- HALAMAN 3: Ungkapan Perasaan -->
+  <div id="halaman3" class="card hidden">
+    <div class="emoji-icon">
+      <img src="https://share.google/m9DiIMUCUwvMuzgQq" alt="Foto Halaman 3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+    </div>
+    <h2>Jujur Dari Hati...</h2>
+    <p>Sejak pertama kenal kamu, hari-hariku rasanya lebih berwarna. Senyum kamu selalu berhasil bikin hariku yang biasa jadi indah banget. 😊❤️</p>
+    <button class="btn" onclick="pindahHalaman('halaman3', 'halaman4')">Lanjut Lagi ✨</button>
+  </div>
+
+  <!-- HALAMAN 4: Pertanyaan & Tombol Jejeran -->
+  <div id="halaman4" class="card hidden">
+    <div class="emoji-icon">
+      <img src="https://share.google/QJBdCEvNp4bxPLuvr" alt="Foto Halaman 4" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+    </div>
+    <h2>Satu Pertanyaan Penting...</h2>
+    <p><strong>Kamu mau enggak jadi crush aku? 🥺✨</strong></p>
+    <div class="btn-container">
+      <button class="btn" onclick="pindahHalaman('halaman4', 'halaman5')">Mau! ❤️</button>
+      <button class="btn" id="btnEnggak" onmouseover="kabur()" onclick="kabur()">Enggak 😜</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 5: Akhir / Terima Kasih -->
+  <div id="halaman5" class="card hidden">
+    <div class="emoji-icon">
+      <img src="https://share.google/n9bPJslWBF4VkOgz0" alt="Foto Halaman 5" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+    </div>
+    <h2>Makasih Banyak Ya! ❤️</h2>
+    <p>Makasih udah mau jadi crush aku! Semoga hari-hari kita makin bahagia terus ya. I'm so happy today! 💖✨</p>
+  </div>
+
+  <!-- Script YouTube API & Logika Interaktif -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    var player;
+    // ID Video YouTube dari link kamu (1XulRzFnTYE)
+    var youtubeID = '1XulRzFnTYE'; 
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: youtubeID,
+        playerVars: {
+          'playsinline': 1,
+          'loop': 1,
+          'playlist': youtubeID
+        }
+      });
+    }
+
+    // Fungsi Memutar Musik
+    function playMusikYT() {
+      if (player && player.playVideo) {
+        player.playVideo();
+      }
+      pindahHalaman('halaman1', 'halaman2');
+    }
+
+    // Fungsi Pindah Halaman Card
+    function pindahHalaman(dari, ke) {
+      document.getElementById(dari).classList.add("hidden");
+      document.getElementById(ke).classList.remove("hidden");
+    }
+
+    // Fungsi Tombol "Enggak" Kabur/Membesar saat ditunjuk
+    function kabur() {
+      var btn = document.getElementById("btnEnggak");
+      
+      // Mengubah posisi tombol jadi melayang HANYA saat disentuh/ditunjuk
+      btn.style.position = "fixed";
+
+      // Hitung koordinat acak agar tidak keluar dari layar HP/Laptop
+      var x = Math.random() * (window.innerWidth - btn.offsetWidth - 50);
+      var y = Math.random() * (window.innerHeight - btn.offsetHeight - 50);
+
+      btn.style.left = Math.max(20, x) + "px";
+      btn.style.top = Math.max(20, y) + "px";
+    }
+
+    // Efek Hati Berterbangan di Background
+    function buatHati() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart-bg');
+      heart.innerHTML = ['❤️', '💖', '✨', '🌸', '💕'][Math.floor(Math.random() * 5)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = Math.random() * 3 + 3 + 's';
+      document.body.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 5000);
+    }
+
+    setInterval(buatHati, 400);
+  </script>
+
+</body>
+</html>
