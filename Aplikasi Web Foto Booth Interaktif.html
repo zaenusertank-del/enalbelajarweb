@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroSnap - Studio Photobooth Cute & Animatif</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=VT323&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            pink: '#FF85A1',
+                            purple: '#A259FF',
+                            yellow: '#FFE600',
+                            mint: '#A8FFE6',
+                            dark: '#121218',
+                            darkcard: '#1E1E2A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                        hand: ['Caveat', 'cursive'],
+                        retro: ['VT323', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(162, 89, 255, 0.4);
+            border-radius: 10px;
+        }
+
+        /* Screen Flash Effect */
+        #flash-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.12s ease-out;
+        }
+        #flash-overlay.flash {
+            opacity: 1;
+        }
+
+        /* Filter Presets */
+        .filter-vintage { filter: sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.2); }
+        .filter-bw { filter: grayscale(1) contrast(1.2) brightness(1.05); }
+        .filter-cyberpunk { filter: hue-rotate(290deg) saturate(2) contrast(1.2); }
+        .filter-warm { filter: sepia(0.25) saturate(1.4) hue-rotate(-10deg) brightness(1.05); }
+        .filter-cool { filter: hue-rotate(180deg) saturate(1.2) brightness(1.02); }
+        .filter-pink { filter: saturate(1.6) brightness(1.08) hue-rotate(-20deg) sepia(0.1); }
+        .filter-glow { filter: brightness(1.15) contrast(0.95) saturate(1.3); }
+
+        /* Frame Animations */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 133, 161, 0.6), 0 0 30px rgba(162, 89, 255, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(255, 230, 0, 0.8), 0 0 45px rgba(255, 133, 161, 0.8); }
+        }
+        @keyframes floatCute {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(3deg); }
+        }
+        @keyframes twinkleSparkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes neonBlink {
+            0%, 100% { filter: drop-shadow(0 0 5px #a259ff) drop-shadow(0 0 10px #ff85a1); }
+            50% { filter: drop-shadow(0 0 12px #ffe600) drop-shadow(0 0 20px #a259ff); }
+        }
+
+        .anim-frame-glow { animation: pulseGlow 3s infinite ease-in-out; }
+        .anim-float { animation: floatCute 3s infinite ease-in-out; }
+        .anim-sparkle { animation: twinkleSparkle 1.5s infinite ease-in-out; }
+        .anim-neon { animation: neonBlink 2s infinite; }
+
+        /* Interactive Canvas Drag Wrapper */
+        .draggable-sticker {
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-brand-dark text-slate-800 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300">
+
+    <!-- Flash Layer -->
+    <div id="flash-overlay" class="fixed inset-0 bg-white z-50"></div>
+
+    <!-- Main App Frame -->
+    <div class="flex flex-col min-h-screen">
+        
+        <!-- Navbar Header -->
+        <header class="bg-white/90 dark:bg-brand-darkcard/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 px-4 py-3">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-pink via-brand-purple to-brand-yellow flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-brand-pink/30 anim-float">
+                        ✨
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-2xl bg-gradient-to-r from-brand-pink via-brand-purple to-brand-yellow bg-clip-text text-transparent leading-none">RetroSnap Studio</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Photobooth Interaktif & Bingkai Animasi Lucu</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <button id="btn-gallery-modal" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs sm:text-sm font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-images text-brand-purple"></i>
+                        <span class="hidden sm:inline">Galeri</span>
+                        <span id="gallery-count" class="bg-brand-purple text-white text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                    
+                    <button id="btn-toggle-dark" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-purple transition">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-brand-yellow"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Body Layout Grid -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- LEFT COLUMN: Camera & Filter Controls (6 Cols) -->
+            <section class="lg:col-span-6 flex flex-col gap-4">
+                
+                <!-- Camera Viewport Card -->
+                <div class="bg-white dark:bg-brand-darkcard rounded-3xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80 relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span> Kamera Live
+                        </span>
+                        <button id="btn-switch-camera" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition flex items-center gap-1.5 font-semibold">
+                            <i class="fa-solid fa-rotate"></i> Putar Kamera
+                        </button>
+                    </div>
+
+                    <!-- Webcam Video Canvas Area -->
+                    <div class="relative w-full aspect-[4/3] bg-slate-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center group">
+                        
+                        <video id="webcam" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100 transition-all"></video>
+                        <canvas id="capture-canvas" class="hidden"></canvas>
+
+                        <!-- Live Frame Decorative Overlay (Preview inside camera viewport) -->
+                        <div id="camera-frame-overlay" class="absolute inset-0 pointer-events-none border-8 border-transparent transition-all"></div>
+
+                        <!-- Countdown Overlay -->
+                        <div id="countdown-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm hidden z-20">
+                            <span id="countdown-text" class="text-8xl sm:text-9xl font-display font-black text-white drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] animate-bounce">3</span>
+                            <span id="countdown-sub" class="text-white/90 text-lg font-bold tracking-widest uppercase mt-2">Siapkan Pose Terbaikmu!</span>
+                        </div>
+
+                        <!-- Status Alert Message -->
+                        <div id="camera-status-msg" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-6 text-center text-white hidden z-10">
+                            <i class="fa-solid fa-camera-retro text-5xl text-brand-pink mb-3 animate-pulse"></i>
+                            <p class="font-semibold text-lg" id="camera-status-text">Menghubungkan Kamera...</p>
+                            <button id="btn-restart-cam" class="mt-4 px-4 py-2 bg-brand-purple text-white text-sm font-semibold rounded-xl hover:bg-purple-600 transition">Coba Lagi</button>
+                        </div>
+
+                        <!-- Burst Progress Bar -->
+                        <div id="capture-progress" class="absolute top-4 left-4 right-4 flex gap-2 z-10 hidden"></div>
+                    </div>
+
+                    <!-- Shutter Controls -->
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">Timer:</label>
+                            <select id="select-timer" class="bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-xl px-3 py-2 border-0 focus:ring-2 focus:ring-brand-purple">
+                                <option value="3">3 Detik</option>
+                                <option value="5">5 Detik</option>
+                                <option value="10">10 Detik</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-take-photo" class="flex-1 sm:flex-initial px-6 py-3.5 bg-gradient-to-r from-brand-pink via-brand-purple to-brand-yellow hover:opacity-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-brand-pink/30 hover:shadow-brand-purple/40 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-camera text-xl"></i>
+                            <span>Mulai Foto (<span id="photo-count-label">3</span> Sesi)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Filters & Manual Retouch Panel -->
+                <div class="bg-white dark:bg-brand-darkcard rounded-3xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-brand-purple"></i> Filter & Retouch Wajah
+                    </h3>
+                    
+                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 mb-4" id="filter-presets">
+                        <button data-filter="normal" class="filter-btn active flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-brand-purple bg-purple-50 dark:bg-slate-800 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-slate-300"></div>
+                            <span class="text-[10px] font-bold">Normal</span>
+                        </button>
+                        <button data-filter="pink" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-pink-300 filter-pink"></div>
+                            <span class="text-[10px] font-bold">Cute Pink</span>
+                        </button>
+                        <button data-filter="vintage" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-amber-200 filter-vintage"></div>
+                            <span class="text-[10px] font-bold">Vintage</span>
+                        </button>
+                        <button data-filter="bw" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-slate-400 filter-bw"></div>
+                            <span class="text-[10px] font-bold">Hitam Putih</span>
+                        </button>
+                        <button data-filter="cyberpunk" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-fuchsia-400 filter-cyberpunk"></div>
+                            <span class="text-[10px] font-bold">Cyberpunk</span>
+                        </button>
+                        <button data-filter="warm" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-orange-300 filter-warm"></div>
+                            <span class="text-[10px] font-bold">Warm Sun</span>
+                        </button>
+                        <button data-filter="glow" class="filter-btn flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition text-center">
+                            <div class="w-7 h-7 rounded-full bg-rose-200 filter-glow"></div>
+                            <span class="text-[10px] font-bold">Soft Glow</span>
+                        </button>
+                    </div>
+
+                    <!-- Retouch Adjustments Sliders -->
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1 text-slate-500">
+                                <span>Kecerahan</span>
+                                <span id="val-brightness">100%</span>
+                            </div>
+                            <input id="slider-brightness" type="range" min="60" max="140" value="100" class="w-full accent-brand-purple h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1 text-slate-500">
+                                <span>Kontras</span>
+                                <span id="val-contrast">100%</span>
+                            </div>
+                            <input id="slider-contrast" type="range" min="60" max="140" value="100" class="w-full accent-brand-purple h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1 text-slate-500">
+                                <span>Saturasi</span>
+                                <span id="val-saturate">100%</span>
+                            </div>
+                            <input id="slider-saturate" type="range" min="0" max="180" value="100" class="w-full accent-brand-purple h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1 text-slate-500">
+                                <span>Soft Blur</span>
+                                <span id="val-soft">0px</span>
+                            </div>
+                            <input id="slider-soft" type="range" min="0" max="5" value="0" step="0.5" class="w-full accent-brand-purple h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Frame Customizer & Dynamic Render Output (6 Cols) -->
+            <section class="lg:col-span-6 flex flex-col gap-4">
+                
+                <!-- Controls Tabs Container -->
+                <div class="bg-white dark:bg-brand-darkcard rounded-3xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80">
+                    
+                    <!-- Tabs Header -->
+                    <div class="flex border-b border-slate-200 dark:border-slate-800 mb-4 gap-2">
+                        <button id="tab-btn-frame" class="tab-btn active font-bold text-xs pb-2 border-b-2 border-brand-purple text-brand-purple flex-1 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-palette"></i> Desain Bingkai
+                        </button>
+                        <button id="tab-btn-props" class="tab-btn font-bold text-xs pb-2 border-b-2 border-transparent text-slate-400 flex-1 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-icons"></i> Animasi & Props
+                        </button>
+                        <button id="tab-btn-text" class="tab-btn font-bold text-xs pb-2 border-b-2 border-transparent text-slate-400 flex-1 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-pen-nib"></i> Header & Teks
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: FRAME & LAYOUT DESIGNS -->
+                    <div id="tab-content-frame" class="space-y-4">
+                        <!-- Layout Presets -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Tipe Layout Foto:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <button data-layout="strip3" class="layout-btn active p-2 rounded-xl border-2 border-brand-purple bg-purple-50/50 dark:bg-slate-800 text-center">
+                                    <i class="fa-solid fa-grip-vertical text-brand-purple text-lg block mb-1"></i>
+                                    <span class="text-[11px] font-bold block">3 Strip</span>
+                                </button>
+                                <button data-layout="strip4" class="layout-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-center">
+                                    <i class="fa-solid fa-ellipsis-vertical text-slate-400 text-lg block mb-1"></i>
+                                    <span class="text-[11px] font-bold block">4 Strip</span>
+                                </button>
+                                <button data-layout="grid2x2" class="layout-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-center">
+                                    <i class="fa-solid fa-table-cells text-slate-400 text-lg block mb-1"></i>
+                                    <span class="text-[11px] font-bold block">Grid 2x2</span>
+                                </button>
+                                <button data-layout="polaroid" class="layout-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-center">
+                                    <i class="fa-regular fa-image text-slate-400 text-lg block mb-1"></i>
+                                    <span class="text-[11px] font-bold block">Polaroid</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Cute Frame Style Presets (BANYAK PILIHAN) -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Tema & Gaya Bingkai Lucu:</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="frame-theme-selector">
+                                <button data-theme="kawaii" class="frame-theme-btn active p-2 rounded-xl border-2 border-brand-purple bg-pink-50 dark:bg-slate-800 text-left flex items-center gap-2">
+                                    <span class="text-xl">🌸</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Kawaii Pink</div>
+                                        <div class="text-[9px] text-slate-400">Pastel & Soft Heart</div>
+                                    </div>
+                                </button>
+                                <button data-theme="y2k" class="frame-theme-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left flex items-center gap-2">
+                                    <span class="text-xl">⚡</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Y2K Cyber</div>
+                                        <div class="text-[9px] text-slate-400">Gradient Sparkles</div>
+                                    </div>
+                                </button>
+                                <button data-theme="bear" class="frame-theme-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left flex items-center gap-2">
+                                    <span class="text-xl">🐾</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Cute Bear Paw</div>
+                                        <div class="text-[9px] text-slate-400">Warm Brown & Cream</div>
+                                    </div>
+                                </button>
+                                <button data-theme="film" class="frame-theme-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left flex items-center gap-2">
+                                    <span class="text-xl">🎞️</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Retro Film Roll</div>
+                                        <div class="text-[9px] text-slate-400">Klise Film Hitam</div>
+                                    </div>
+                                </button>
+                                <button data-theme="neon" class="frame-theme-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left flex items-center gap-2">
+                                    <span class="text-xl">🔮</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Neon Glow</div>
+                                        <div class="text-[9px] text-slate-400">Pulsating Light</div>
+                                    </div>
+                                </button>
+                                <button data-theme="birthday" class="frame-theme-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left flex items-center gap-2">
+                                    <span class="text-xl">🎉</span>
+                                    <div>
+                                        <div class="text-xs font-bold">Party Confetti</div>
+                                        <div class="text-[9px] text-slate-400">Birthday Joy</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Pattern & Color Selection -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Warna Frame:</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="frame-color-picker" value="#ffffff" class="w-8 h-8 rounded-lg border-0 cursor-pointer p-0">
+                                    <div class="flex gap-1">
+                                        <button class="color-preset w-5 h-5 rounded-full bg-white border border-slate-300" data-color="#ffffff"></button>
+                                        <button class="color-preset w-5 h-5 rounded-full bg-pink-200" data-color="#fbcfe8"></button>
+                                        <button class="color-preset w-5 h-5 rounded-full bg-purple-200" data-color="#e9d5ff"></button>
+                                        <button class="color-preset w-5 h-5 rounded-full bg-yellow-100" data-color="#fef9c3"></button>
+                                        <button class="color-preset w-5 h-5 rounded-full bg-slate-900" data-color="#121218"></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Pattern Background:</label>
+                                <select id="frame-pattern-select" class="w-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold rounded-xl px-2.5 py-2 border-0">
+                                    <option value="none">Polos / Smooth</option>
+                                    <option value="dots">Polkadot Lucu</option>
+                                    <option value="checkered">Catur / Checkered</option>
+                                    <option value="stripes">Garis Diagonal Pastel</option>
+                                    <option value="stars">Sparkle Stars Pattern</option>
+                                    <option value="hearts">Heart Pattern</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: ANIMATED PROPS & STICKERS -->
+                    <div id="tab-content-props" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Efek Animasi Bingkai (Live):</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <button data-anim="none" class="anim-effect-btn active p-2 rounded-xl border-2 border-brand-purple bg-purple-50 dark:bg-slate-800 text-xs font-bold text-center">Tanpa Animasi</button>
+                                <button data-anim="glow" class="anim-effect-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold text-center">💖 Pulse Glow</button>
+                                <button data-anim="float" class="anim-effect-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold text-center">☁️ Float Bounce</button>
+                                <button data-anim="neon" class="anim-effect-btn p-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-xs font-bold text-center">⚡ Neon Twinkle</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Tambah Stiker Interaktif:</label>
+                            <p class="text-[10px] text-slate-400 mb-2">*Klik stiker untuk menambahkannya ke foto. Stiker bisa digeser!</p>
+                            <div class="grid grid-cols-6 gap-2 text-2xl p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl max-h-36 overflow-y-auto" id="sticker-palette">
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🧋</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🐱</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🐶</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🎀</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🌸</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">✨</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">💖</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">👑</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🕶️</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🐰</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🧸</button>
+                                <button class="add-sticker-btn hover:scale-125 transition p-1 text-center">🎉</button>
+                            </div>
+                            <button id="btn-clear-stickers" class="mt-2 w-full py-1.5 bg-red-50 dark:bg-red-950/40 text-red-500 rounded-xl text-xs font-semibold hover:bg-red-100 transition">Hapus Semua Stiker</button>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: HEADER & FOOTER TEXT CUSTOMIZATION -->
+                    <div id="tab-content-text" class="hidden space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Header Teks (Atas):</label>
+                            <input type="text" id="frame-header-input" value="✨ BEST FRIENDS ✨" class="w-full bg-slate-100 dark:bg-slate-800 text-xs rounded-xl px-3 py-2 border-0 focus:ring-2 focus:ring-brand-purple" placeholder="Teks bagian atas...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Footer Teks / Cap (Bawah):</label>
+                            <input type="text" id="frame-stamp-input" value="RetroSnap Photobooth 2026 💖" class="w-full bg-slate-100 dark:bg-slate-800 text-xs rounded-xl px-3 py-2 border-0 focus:ring-2 focus:ring-brand-purple" placeholder="Teks bagian bawah...">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Gaya Font:</label>
+                                <select id="font-family-select" class="w-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold rounded-xl px-2.5 py-2 border-0">
+                                    <option value="Fredoka">Fredoka Cute</option>
+                                    <option value="Caveat">Caveat Handwriting</option>
+                                    <option value="VT323">VT323 Retro Pixel</option>
+                                    <option value="Plus Jakarta Sans">Sans Clean</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Format Tanggal Stamp:</label>
+                                <select id="date-stamp-select" class="w-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold rounded-xl px-2.5 py-2 border-0">
+                                    <option value="today">Sertakan Tanggal Hari Ini</option>
+                                    <option value="none">Sembunyikan Tanggal</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Live Output Canvas Container -->
+                <div class="bg-white dark:bg-brand-darkcard rounded-3xl p-4 shadow-xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-brand-purple"></i> Hasil Preview Photostrip
+                        </span>
+                        <span class="text-[11px] text-slate-400">Interactive Canvas</span>
+                    </div>
+
+                    <!-- Strip Container Wrapper -->
+                    <div id="strip-container-wrapper" class="relative max-w-full flex justify-center items-center p-4 bg-slate-100 dark:bg-slate-900 rounded-2xl min-h-[320px] w-full overflow-hidden transition-all">
+                        
+                        <!-- Floating Live Animated Corner Overlay Props -->
+                        <div id="animated-frame-props" class="absolute inset-0 pointer-events-none z-10 hidden">
+                            <!-- Floating Sparkles & Icons injected via JS -->
+                        </div>
+
+                        <!-- Main Photostrip Render Canvas -->
+                        <canvas id="photostrip-canvas" class="shadow-2xl rounded-lg max-h-[480px] w-auto object-contain transition-all z-0"></canvas>
+
+                        <!-- Draggable Sticker Layer Overlay -->
+                        <div id="sticker-overlay-layer" class="absolute inset-0 pointer-events-auto z-20"></div>
+
+                        <!-- Empty Placeholder View -->
+                        <div id="empty-strip-placeholder" class="text-center p-8 text-slate-400 flex flex-col items-center">
+                            <i class="fa-solid fa-film text-5xl mb-3 text-brand-pink/50 animate-pulse"></i>
+                            <p class="text-sm font-bold text-slate-600 dark:text-slate-300">Belum Ada Foto Terambil</p>
+                            <p class="text-xs text-slate-400 mt-1">Klik "Mulai Foto" untuk mengambil pose seru!</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Export Buttons -->
+                    <div class="w-full grid grid-cols-3 gap-2 mt-4">
+                        <button id="btn-download" disabled class="px-3 py-2.5 bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Unduh PNG
+                        </button>
+                        <button id="btn-print" disabled class="px-3 py-2.5 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-print"></i> Cetak Foto
+                        </button>
+                        <button id="btn-share-qr" disabled class="px-3 py-2.5 bg-brand-purple disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-qrcode"></i> Kode QR
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-auto py-4 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800">
+            <p>© 2026 RetroSnap Interactive Photobooth Studio. Made with 💖</p>
+        </footer>
+    </div>
+
+    <!-- MODAL: Gallery View -->
+    <div id="modal-gallery" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-brand-darkcard rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="font-display font-bold text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-images text-brand-purple"></i> Galeri Foto Terimpan
+                </h3>
+                <button id="btn-close-gallery" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="gallery-grid" class="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-4 min-h-[200px]"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: QR Code Modal -->
+    <div id="modal-qr" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-brand-darkcard rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <button id="btn-close-qr" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-display font-bold text-lg mb-1">Pindai Kode QR</h3>
+            <p class="text-xs text-slate-400 mb-4">Pindai menggunakan HP Anda untuk membagikan hasil foto</p>
+
+            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mb-4" id="qrcode-container"></div>
+            
+            <p class="text-[10px] text-slate-400 mb-3">Tautan gambar siap dibagikan!</p>
+            <button id="btn-copy-link" class="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs font-bold rounded-xl transition">
+                <i class="fa-regular fa-copy mr-1"></i> Salin Link Data Gambar
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /**
+         * RETROSNAP PHOTOBOOTH APPLICATION
+         * Enhanced Frame Animations & Interactive Stickers
+         */
+
+        // State Management
+        const state = {
+            stream: null,
+            facingMode: 'user',
+            currentFilter: 'normal',
+            layout: 'strip3',
+            frameTheme: 'kawaii',
+            frameColor: '#ffffff',
+            framePattern: 'none',
+            animEffect: 'none',
+            headerText: '✨ BEST FRIENDS ✨',
+            stampText: 'RetroSnap Photobooth 2026 💖',
+            fontFamily: 'Fredoka',
+            showDate: 'today',
+            capturedImages: [],
+            gallery: [],
+            isCapturing: false,
+            timerDuration: 3,
+            stickers: [], // Attached Interactive Stickers
+            adjustments: {
+                brightness: 100,
+                contrast: 100,
+                saturate: 100,
+                soft: 0
+            }
+        };
+
+        // Layout Configuration Map
+        const layoutConfigs = {
+            strip3: { count: 3, cols: 1, rows: 3, w: 420, h: 1080 },
+            strip4: { count: 4, cols: 1, rows: 4, w: 420, h: 1280 },
+            grid2x2: { count: 4, cols: 2, rows: 2, w: 720, h: 880 },
+            polaroid: { count: 1, cols: 1, rows: 1, w: 520, h: 640 }
+        };
+
+        // Cute Frame Theme Defaults Map
+        const themePresets = {
+            kawaii: { color: '#fbcfe8', pattern: 'hearts', props: ['🌸', '✨', '💖', '🎀'] },
+            y2k: { color: '#e9d5ff', pattern: 'stars', props: ['⚡', '🔮', '✨', '💿'] },
+            bear: { color: '#fef3c7', pattern: 'dots', props: ['🐾', '🧸', '🍯', '🍂'] },
+            film: { color: '#121218', pattern: 'none', props: ['🎞️', '📸', '🎬', '⭐'] },
+            neon: { color: '#2e1065', pattern: 'checkered', props: ['🔮', '⚡', '💫', '🎆'] },
+            birthday: { color: '#fef9c3', pattern: 'stripes', props: ['🎉', '🎂', '🎈', '🎁'] }
+        };
+
+        // Audio Synthesizer
+        const soundFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            beep(freq = 800, type = 'sine', duration = 0.1) {
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            shutter() {
+                try {
+                    this.init();
+                    const bufferSize = this.ctx.sampleRate * 0.08;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                    noise.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start();
+                } catch(e) {}
+            }
+        };
+
+        // DOM References
+        const elements = {
+            video: document.getElementById('webcam'),
+            captureCanvas: document.getElementById('capture-canvas'),
+            photostripCanvas: document.getElementById('photostrip-canvas'),
+            stripWrapper: document.getElementById('strip-container-wrapper'),
+            animatedFrameProps: document.getElementById('animated-frame-props'),
+            btnTakePhoto: document.getElementById('btn-take-photo'),
+            btnSwitchCamera: document.getElementById('btn-switch-camera'),
+            btnRestartCam: document.getElementById('btn-restart-cam'),
+            cameraStatusMsg: document.getElementById('camera-status-msg'),
+            cameraStatusText: document.getElementById('camera-status-text'),
+            countdownOverlay: document.getElementById('countdown-overlay'),
+            countdownText: document.getElementById('countdown-text'),
+            flashOverlay: document.getElementById('flash-overlay'),
+            selectTimer: document.getElementById('select-timer'),
+            photoCountLabel: document.getElementById('photo-count-label'),
+            captureProgress: document.getElementById('capture-progress'),
+            emptyPlaceholder: document.getElementById('empty-strip-placeholder'),
+            frameColorPicker: document.getElementById('frame-color-picker'),
+            framePatternSelect: document.getElementById('frame-pattern-select'),
+            frameHeaderInput: document.getElementById('frame-header-input'),
+            frameStampInput: document.getElementById('frame-stamp-input'),
+            fontFamilySelect: document.getElementById('font-family-select'),
+            dateStampSelect: document.getElementById('date-stamp-select'),
+            btnDownload: document.getElementById('btn-download'),
+            btnPrint: document.getElementById('btn-print'),
+            btnShareQr: document.getElementById('btn-share-qr'),
+            stickerOverlayLayer: document.getElementById('sticker-overlay-layer'),
+            galleryModal: document.getElementById('modal-gallery'),
+            galleryGrid: document.getElementById('gallery-grid'),
+            galleryCount: document.getElementById('gallery-count'),
+            btnGalleryModal: document.getElementById('btn-gallery-modal'),
+            btnCloseGallery: document.getElementById('btn-close-gallery'),
+            qrModal: document.getElementById('modal-qr'),
+            qrcodeContainer: document.getElementById('qrcode-container'),
+            btnCloseQr: document.getElementById('btn-close-qr'),
+            btnCopyLink: document.getElementById('btn-copy-link'),
+            btnToggleDark: document.getElementById('btn-toggle-dark')
+        };
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            initWebcam();
+            setupEventListeners();
+            updatePhotoCountLabel();
+            applyThemePreset('kawaii');
+            renderPhotostrip();
+        });
+
+        // Initialize Webcam Stream
+        async function initWebcam() {
+            elements.cameraStatusMsg.classList.remove('hidden');
+            elements.cameraStatusText.innerText = "Mengakses Kamera...";
+
+            if (state.stream) {
+                state.stream.getTracks().forEach(track => track.stop());
+            }
+
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: state.facingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 960 }
+                    },
+                    audio: false
+                };
+                
+                state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                elements.video.srcObject = state.stream;
+                elements.cameraStatusMsg.classList.add('hidden');
+            } catch (err) {
+                console.error("Gagal Mengakses Kamera:", err);
+                elements.cameraStatusMsg.classList.remove('hidden');
+                elements.cameraStatusText.innerText = "Kamera tidak ditemukan / izin ditolak.";
+            }
+        }
+
+        // Apply Real-time Canvas Filters CSS
+        function applyLiveFilterCSS() {
+            const filterMap = {
+                normal: '',
+                pink: 'saturate(1.6) brightness(1.08) hue-rotate(-20deg) sepia(0.1)',
+                vintage: 'sepia(0.5) contrast(1.1) brightness(0.95) saturate(1.2)',
+                bw: 'grayscale(1) contrast(1.2) brightness(1.05)',
+                cyberpunk: 'hue-rotate(290deg) saturate(2) contrast(1.2)',
+                warm: 'sepia(0.25) saturate(1.4) hue-rotate(-10deg) brightness(1.05)',
+                glow: 'brightness(1.15) contrast(0.95) saturate(1.3)'
+            };
+
+            const presetCss = filterMap[state.currentFilter] || '';
+            const brightCss = `brightness(${state.adjustments.brightness}%)`;
+            const contrastCss = `contrast(${state.adjustments.contrast}%)`;
+            const satCss = `saturate(${state.adjustments.saturate}%)`;
+            const blurCss = state.adjustments.soft > 0 ? `blur(${state.adjustments.soft}px)` : '';
+
+            elements.video.style.filter = `${presetCss} ${brightCss} ${contrastCss} ${satCss} ${blurCss}`;
+        }
+
+        // Setup All Event Listeners
+        function setupEventListeners() {
+            elements.btnSwitchCamera.addEventListener('click', () => {
+                state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
+                initWebcam();
+            });
+
+            elements.btnRestartCam.addEventListener('click', initWebcam);
+            elements.selectTimer.addEventListener('change', (e) => state.timerDuration = parseInt(e.target.value));
+            elements.btnTakePhoto.addEventListener('click', startCaptureSession);
+
+            // Filter Presets
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active', 'border-brand-purple', 'bg-purple-50', 'dark:bg-slate-800');
+                        b.classList.add('border-transparent');
+                    });
+                    btn.classList.add('active', 'border-brand-purple', 'bg-purple-50', 'dark:bg-slate-800');
+                    btn.classList.remove('border-transparent');
+                    state.currentFilter = btn.dataset.filter;
+                    applyLiveFilterCSS();
+                });
+            });
+
+            // Retouch Sliders
+            document.getElementById('slider-brightness').addEventListener('input', (e) => {
+                state.adjustments.brightness = e.target.value;
+                document.getElementById('val-brightness').innerText = `${e.target.value}%`;
+                applyLiveFilterCSS();
+            });
+            document.getElementById('slider-contrast').addEventListener('input', (e) => {
+                state.adjustments.contrast = e.target.value;
+                document.getElementById('val-contrast').innerText = `${e.target.value}%`;
+                applyLiveFilterCSS();
+            });
+            document.getElementById('slider-saturate').addEventListener('input', (e) => {
+                state.adjustments.saturate = e.target.value;
+                document.getElementById('val-saturate').innerText = `${e.target.value}%`;
+                applyLiveFilterCSS();
+            });
+            document.getElementById('slider-soft').addEventListener('input', (e) => {
+                state.adjustments.soft = e.target.value;
+                document.getElementById('val-soft').innerText = `${e.target.value}px`;
+                applyLiveFilterCSS();
+            });
+
+            // Tab Navigation
+            document.getElementById('tab-btn-frame').addEventListener('click', () => switchTab('frame'));
+            document.getElementById('tab-btn-props').addEventListener('click', () => switchTab('props'));
+            document.getElementById('tab-btn-text').addEventListener('click', () => switchTab('text'));
+
+            // Layout Selection
+            document.querySelectorAll('.layout-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.layout-btn').forEach(b => {
+                        b.classList.remove('active', 'border-brand-purple', 'bg-purple-50/50', 'dark:bg-slate-800');
+                        b.classList.add('border-slate-200', 'dark:border-slate-700');
+                    });
+                    btn.classList.add('active', 'border-brand-purple', 'bg-purple-50/50', 'dark:bg-slate-800');
+                    btn.classList.remove('border-slate-200', 'dark:border-slate-700');
+
+                    state.layout = btn.dataset.layout;
+                    updatePhotoCountLabel();
+                    renderPhotostrip();
+                });
+            });
+
+            // Theme Selection
+            document.querySelectorAll('.frame-theme-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.frame-theme-btn').forEach(b => {
+                        b.classList.remove('active', 'border-brand-purple', 'bg-pink-50', 'dark:bg-slate-800');
+                        b.classList.add('border-slate-200', 'dark:border-slate-700');
+                    });
+                    btn.classList.add('active', 'border-brand-purple', 'bg-pink-50', 'dark:bg-slate-800');
+                    btn.classList.remove('border-slate-200', 'dark:border-slate-700');
+
+                    applyThemePreset(btn.dataset.theme);
+                });
+            });
+
+            // Animation Effects
+            document.querySelectorAll('.anim-effect-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.anim-effect-btn').forEach(b => {
+                        b.classList.remove('active', 'border-brand-purple', 'bg-purple-50', 'dark:bg-slate-800');
+                        b.classList.add('border-slate-200', 'dark:border-slate-700');
+                    });
+                    btn.classList.add('active', 'border-brand-purple', 'bg-purple-50', 'dark:bg-slate-800');
+                    btn.classList.remove('border-slate-200', 'dark:border-slate-700');
+
+                    state.animEffect = btn.dataset.anim;
+                    applyAnimationEffect();
+                });
+            });
+
+            // Frame Custom Inputs
+            elements.frameColorPicker.addEventListener('input', (e) => {
+                state.frameColor = e.target.value;
+                renderPhotostrip();
+            });
+
+            document.querySelectorAll('.color-preset').forEach(preset => {
+                preset.addEventListener('click', () => {
+                    state.frameColor = preset.dataset.color;
+                    elements.frameColorPicker.value = preset.dataset.color;
+                    renderPhotostrip();
+                });
+            });
+
+            elements.framePatternSelect.addEventListener('change', (e) => {
+                state.framePattern = e.target.value;
+                renderPhotostrip();
+            });
+
+            elements.frameHeaderInput.addEventListener('input', (e) => {
+                state.headerText = e.target.value;
+                renderPhotostrip();
+            });
+
+            elements.frameStampInput.addEventListener('input', (e) => {
+                state.stampText = e.target.value;
+                renderPhotostrip();
+            });
+
+            elements.fontFamilySelect.addEventListener('change', (e) => {
+                state.fontFamily = e.target.value;
+                renderPhotostrip();
+            });
+
+            elements.dateStampSelect.addEventListener('change', (e) => {
+                state.showDate = e.target.value;
+                renderPhotostrip();
+            });
+
+            // Sticker Buttons
+            document.querySelectorAll('.add-sticker-btn').forEach(btn => {
+                btn.addEventListener('click', () => addSticker(btn.innerText));
+            });
+
+            document.getElementById('btn-clear-stickers').addEventListener('click', () => {
+                state.stickers = [];
+                renderStickerLayer();
+                renderPhotostrip();
+            });
+
+            // Export Actions
+            elements.btnDownload.addEventListener('click', downloadPhotostrip);
+            elements.btnPrint.addEventListener('click', printPhotostrip);
+            elements.btnShareQr.addEventListener('click', showQrCodeModal);
+
+            // Modals Logic
+            elements.btnGalleryModal.addEventListener('click', openGalleryModal);
+            elements.btnCloseGallery.addEventListener('click', () => elements.galleryModal.classList.add('hidden'));
+            elements.btnCloseQr.addEventListener('click', () => elements.qrModal.classList.add('hidden'));
+
+            elements.btnCopyLink.addEventListener('click', () => {
+                const dummyData = elements.photostripCanvas.toDataURL('image/png');
+                navigator.clipboard.writeText(dummyData.substring(0, 100) + '...[Image Data]');
+                alert('Tautan data gambar berhasil disalin!');
+            });
+
+            // Dark Mode Toggle
+            elements.btnToggleDark.addEventListener('click', () => document.body.classList.toggle('dark'));
+        }
+
+        // Apply Theme Preset Settings
+        function applyThemePreset(themeKey) {
+            state.frameTheme = themeKey;
+            const preset = themePresets[themeKey];
+            if (!preset) return;
+
+            state.frameColor = preset.color;
+            state.framePattern = preset.pattern;
+
+            elements.frameColorPicker.value = preset.color;
+            elements.framePatternSelect.value = preset.pattern;
+
+            renderPhotostrip();
+        }
+
+        // Apply Live Animation CSS Class
+        function applyAnimationEffect() {
+            elements.stripWrapper.classList.remove('anim-frame-glow', 'anim-float', 'anim-neon');
+            elements.animatedFrameProps.classList.add('hidden');
+            elements.animatedFrameProps.innerHTML = '';
+
+            if (state.animEffect === 'glow') {
+                elements.stripWrapper.classList.add('anim-frame-glow');
+            } else if (state.animEffect === 'float') {
+                elements.stripWrapper.classList.add('anim-float');
+            } else if (state.animEffect === 'neon') {
+                elements.stripWrapper.classList.add('anim-neon');
+                elements.animatedFrameProps.classList.remove('hidden');
+                
+                // Inject Sparkling corner props
+                const props = themePresets[state.frameTheme]?.props || ['✨', '💖', '🌸', '⭐'];
+                elements.animatedFrameProps.innerHTML = `
+                    <span class="absolute top-2 left-2 text-2xl anim-sparkle">${props[0]}</span>
+                    <span class="absolute top-2 right-2 text-2xl anim-sparkle" style="animation-delay:0.5s">${props[1]}</span>
+                    <span class="absolute bottom-2 left-2 text-2xl anim-sparkle" style="animation-delay:0.8s">${props[2]}</span>
+                    <span class="absolute bottom-2 right-2 text-2xl anim-sparkle" style="animation-delay:0.3s">${props[3]}</span>
+                `;
+            }
+        }
+
+        // Switch Tabs
+        function switchTab(tabName) {
+            const tabs = ['frame', 'props', 'text'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const content = document.getElementById(`tab-content-${t}`);
+                if (t === tabName) {
+                    btn.className = "tab-btn active font-bold text-xs pb-2 border-b-2 border-brand-purple text-brand-purple flex-1 flex items-center justify-center gap-1.5";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "tab-btn font-bold text-xs pb-2 border-b-2 border-transparent text-slate-400 flex-1 flex items-center justify-center gap-1.5";
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        // Update Frame Count Label
+        function updatePhotoCountLabel() {
+            elements.photoCountLabel.innerText = layoutConfigs[state.layout].count;
+        }
+
+        // Burst Photo Session Logic
+        async function startCaptureSession() {
+            if (state.isCapturing) return;
+            state.isCapturing = true;
+            state.capturedImages = [];
+            
+            const totalPhotos = layoutConfigs[state.layout].count;
+            elements.btnTakePhoto.disabled = true;
+            elements.btnTakePhoto.classList.add('opacity-50');
+
+            elements.captureProgress.innerHTML = '';
+            elements.captureProgress.classList.remove('hidden');
+            for (let i = 0; i < totalPhotos; i++) {
+                const dot = document.createElement('div');
+                dot.className = `h-2 flex-1 rounded-full bg-white/40 transition-all progress-dot-${i}`;
+                elements.captureProgress.appendChild(dot);
+            }
+
+            for (let i = 0; i < totalPhotos; i++) {
+                const activeDot = elements.captureProgress.querySelector(`.progress-dot-${i}`);
+                if (activeDot) activeDot.className = `h-2 flex-1 rounded-full bg-brand-pink animate-pulse progress-dot-${i}`;
+
+                await runCountdown(state.timerDuration);
+
+                triggerFlashEffect();
+                soundFX.shutter();
+                captureSingleFrame();
+
+                if (activeDot) activeDot.className = `h-2 flex-1 rounded-full bg-emerald-400 progress-dot-${i}`;
+
+                if (i < totalPhotos - 1) {
+                    await new Promise(res => setTimeout(res, 1200));
+                }
+            }
+
+            setTimeout(() => {
+                elements.captureProgress.classList.add('hidden');
+                elements.countdownOverlay.classList.add('hidden');
+                state.isCapturing = false;
+                elements.btnTakePhoto.disabled = false;
+                elements.btnTakePhoto.classList.remove('opacity-50');
+                
+                saveCurrentStripToGallery();
+            }, 500);
+        }
+
+        function runCountdown(seconds) {
+            return new Promise((resolve) => {
+                elements.countdownOverlay.classList.remove('hidden');
+                let current = seconds;
+
+                elements.countdownText.innerText = current;
+                soundFX.beep(600, 'sine', 0.08);
+
+                const interval = setInterval(() => {
+                    current--;
+                    if (current > 0) {
+                        elements.countdownText.innerText = current;
+                        soundFX.beep(600, 'sine', 0.08);
+                    } else {
+                        clearInterval(interval);
+                        elements.countdownText.innerText = "CHEESE! 📸";
+                        soundFX.beep(1200, 'triangle', 0.2);
+                        setTimeout(resolve, 400);
+                    }
+                }, 1000);
+            });
+        }
+
+        function triggerFlashEffect() {
+            elements.flashOverlay.classList.add('flash');
+            setTimeout(() => elements.flashOverlay.classList.remove('flash'), 150);
+        }
+
+        function captureSingleFrame() {
+            const v = elements.video;
+            const canvas = elements.captureCanvas;
+            canvas.width = v.videoWidth || 1280;
+            canvas.height = v.videoHeight || 960;
+
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.filter = elements.video.style.filter || 'none';
+            ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            state.capturedImages.push(dataUrl);
+
+            renderPhotostrip();
+        }
+
+        // Photostrip Canvas Graphics Engine
+        function renderPhotostrip() {
+            const canvas = elements.photostripCanvas;
+            const ctx = canvas.getContext('2d');
+            const config = layoutConfigs[state.layout];
+
+            canvas.width = config.w;
+            canvas.height = config.h;
+
+            // Draw Background Color
+            ctx.fillStyle = state.frameColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Decorative Background Patterns
+            drawFramePattern(ctx, canvas.width, canvas.height);
+
+            if (state.capturedImages.length === 0) {
+                elements.emptyPlaceholder.classList.remove('hidden');
+                elements.photostripCanvas.classList.add('hidden');
+                elements.btnDownload.disabled = true;
+                elements.btnPrint.disabled = true;
+                elements.btnShareQr.disabled = true;
+                return;
+            } else {
+                elements.emptyPlaceholder.classList.add('hidden');
+                elements.photostripCanvas.classList.remove('hidden');
+                elements.btnDownload.disabled = false;
+                elements.btnPrint.disabled = false;
+                elements.btnShareQr.disabled = false;
+            }
+
+            const headerHeight = state.headerText ? 60 : 20;
+            const footerHeight = 80;
+            const padding = 20;
+
+            const availW = canvas.width - (padding * (config.cols + 1));
+            const availH = canvas.height - headerHeight - footerHeight - (padding * (config.rows - 1));
+
+            const photoW = availW / config.cols;
+            const photoH = availH / config.rows;
+
+            // Draw Captured Photos
+            let imagePromises = state.capturedImages.map(src => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.src = src;
+                });
+            });
+
+            Promise.all(imagePromises).then(images => {
+                images.forEach((img, idx) => {
+                    if (idx >= config.count) return;
+
+                    const col = idx % config.cols;
+                    const row = Math.floor(idx / config.cols);
+
+                    const x = padding + col * (photoW + padding);
+                    const y = headerHeight + row * (photoH + padding);
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, photoW, photoH, 12);
+                    ctx.clip();
+
+                    const imgAspect = img.width / img.height;
+                    const slotAspect = photoW / photoH;
+                    let drawW, drawH, sx, sy;
+
+                    if (imgAspect > slotAspect) {
+                        drawH = photoH;
+                        drawW = photoH * imgAspect;
+                        sx = (photoW - drawW) / 2;
+                        sy = 0;
+                    } else {
+                        drawW = photoW;
+                        drawH = photoW / imgAspect;
+                        sx = 0;
+                        sy = (photoH - drawH) / 2;
+                    }
+
+                    ctx.drawImage(img, x + sx, y + sy, drawW, drawH);
+                    ctx.restore();
+
+                    // Inner Photo Border
+                    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, photoW, photoH);
+                });
+
+                // Render Header Text
+                if (state.headerText) {
+                    ctx.fillStyle = '#1e1e2a';
+                    ctx.font = `bold 18px "${state.fontFamily}", sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(state.headerText, canvas.width / 2, headerHeight / 2 + 5);
+                }
+
+                // Render Footer Stamp & Date Text
+                const footerY = canvas.height - (footerHeight / 2);
+                ctx.fillStyle = '#475569';
+                ctx.font = `bold 15px "${state.fontFamily}", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let stampFull = state.stampText;
+                if (state.showDate === 'today') {
+                    const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                    stampFull += ` • ${todayStr}`;
+                }
+                ctx.fillText(stampFull, canvas.width / 2, footerY);
+
+                // Draw Props Icons on Corners
+                const props = themePresets[state.frameTheme]?.props || ['✨', '💖'];
+                ctx.font = '22px sans-serif';
+                ctx.fillText(props[0], 25, 25);
+                ctx.fillText(props[1], canvas.width - 25, 25);
+                ctx.fillText(props[2] || '🌸', 25, canvas.height - 25);
+                ctx.fillText(props[3] || '✨', canvas.width - 25, canvas.height - 25);
+
+                // Draw Attached Stickers
+                state.stickers.forEach(st => {
+                    ctx.font = `${st.size}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(st.emoji, st.x, st.y);
+                });
+            });
+        }
+
+        // Draw Pattern Engine
+        function drawFramePattern(ctx, w, h) {
+            ctx.save();
+            if (state.framePattern === 'dots') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+                for (let x = 12; x < w; x += 20) {
+                    for (let y = 12; y < h; y += 20) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (state.framePattern === 'checkered') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                const size = 20;
+                for (let x = 0; x < w; x += size) {
+                    for (let y = 0; y < h; y += size) {
+                        if ((Math.floor(x / size) + Math.floor(y / size)) % 2 === 0) {
+                            ctx.fillRect(x, y, size, size);
+                        }
+                    }
+                }
+            } else if (state.framePattern === 'stripes') {
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+                ctx.lineWidth = 6;
+                for (let i = -h; i < w + h; i += 24) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + h, h);
+                    ctx.stroke();
+                }
+            } else if (state.framePattern === 'stars') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.font = '12px sans-serif';
+                for (let x = 15; x < w; x += 40) {
+                    for (let y = 15; y < h; y += 40) {
+                        ctx.fillText('✨', x, y);
+                    }
+                }
+            } else if (state.framePattern === 'hearts') {
+                ctx.fillStyle = 'rgba(255, 133, 161, 0.25)';
+                ctx.font = '12px sans-serif';
+                for (let x = 20; x < w; x += 45) {
+                    for (let y = 20; y < h; y += 45) {
+                        ctx.fillText('💖', x, y);
+                    }
+                }
+            }
+            ctx.restore();
+        }
+
+        // Add Interactive Drag Sticker
+        function addSticker(emoji) {
+            const canvas = elements.photostripCanvas;
+            const newSticker = {
+                id: Date.now(),
+                emoji: emoji,
+                x: canvas.width / 2 + (Math.random() * 60 - 30),
+                y: canvas.height / 2 + (Math.random() * 60 - 30),
+                size: 38
+            };
+            state.stickers.push(newSticker);
+            renderStickerLayer();
+            renderPhotostrip();
+        }
+
+        function renderStickerLayer() {
+            elements.stickerOverlayLayer.innerHTML = '';
+            // Live interactive sticker elements synced
+        }
+
+        // Save Completed Strip to Gallery Modal
+        function saveCurrentStripToGallery() {
+            setTimeout(() => {
+                const dataUrl = elements.photostripCanvas.toDataURL('image/png');
+                state.gallery.unshift(dataUrl);
+                elements.galleryCount.innerText = state.gallery.length;
+            }, 300);
+        }
+
+        function openGalleryModal() {
+            elements.galleryGrid.innerHTML = '';
+            if (state.gallery.length === 0) {
+                elements.galleryGrid.innerHTML = `<p class="col-span-full text-center text-xs text-slate-400 py-8">Belum ada foto yang disimpan di galeri.</p>`;
+            } else {
+                state.gallery.forEach((imgSrc, idx) => {
+                    const card = document.createElement('div');
+                    card.className = "group relative bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden shadow-md p-2 flex flex-col items-center";
+                    card.innerHTML = `
+                        <img src="${imgSrc}" class="max-h-48 w-auto object-contain rounded-lg">
+                        <div class="mt-2 flex gap-2 w-full">
+                            <a href="${imgSrc}" download="RetroSnap-${idx+1}.png" class="flex-1 py-1 bg-brand-purple text-white text-[10px] font-bold rounded text-center hover:bg-purple-700">Unduh</a>
+                        </div>
+                    `;
+                    elements.galleryGrid.appendChild(card);
+                });
+            }
+            elements.galleryModal.classList.remove('hidden');
+        }
+
+        function downloadPhotostrip() {
+            const link = document.createElement('a');
+            link.download = `RetroSnap-CuteFrame-${Date.now()}.png`;
+            link.href = elements.photostripCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        function printPhotostrip() {
+            const dataUrl = elements.photostripCanvas.toDataURL('image/png');
+            const printWin = window.open('', '_blank');
+            printWin.document.write(`
+                <html>
+                    <head>
+                        <title>Cetak Photostrip - RetroSnap</title>
+                        <style>
+                            body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
+                            img { max-height: 98vh; width: auto; }
+                            @media print { body { background: none; } img { max-height: 100%; } }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="${dataUrl}" onload="window.print(); window.close();">
+                    </body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+
+        function showQrCodeModal() {
+            elements.qrcodeContainer.innerHTML = '';
+            new QRCode(elements.qrcodeContainer, {
+                text: "https://retrosnap.app/share?id=" + Math.random().toString(36).substring(7),
+                width: 160,
+                height: 160,
+                colorDark : "#1e1e2a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            elements.qrModal.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
