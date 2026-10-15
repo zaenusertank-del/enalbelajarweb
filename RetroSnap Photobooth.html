@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroSnap Photobooth</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            pink: '#ff70a6',
+                            purple: '#a370ff',
+                            yellow: '#ffd166',
+                            teal: '#70d6ff',
+                            dark: '#1e1b2e'
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        caveat: ['Caveat', 'cursive'],
+                        vt323: ['VT323', 'monospace'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff70a6;
+            border-radius: 4px;
+        }
+
+        /* Flash Screen Overlay */
+        #flash-screen {
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
+        }
+
+        /* Camera Mirror Logic */
+        .mirror-mode {
+            transform: scaleX(-1);
+        }
+
+        /* Custom Frame Patterns */
+        .pattern-polka {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.3) 2px, transparent 2px);
+            background-size: 16px 16px;
+        }
+        .pattern-checkered {
+            background-image: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%), linear-gradient(-45deg, rgba(0,0,0,0.1) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.1) 75%), linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.1) 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .pattern-stripes {
+            background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.15) 10px, rgba(255,255,255,0.15) 20px);
+        }
+
+        /* Animated Frame FX */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 112, 166, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(112, 214, 255, 0.9); }
+        }
+        .anim-pulse { animation: pulseGlow 2s infinite; }
+
+        @keyframes floatBounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .anim-float { animation: floatBounce 3s ease-in-out infinite; }
+
+        @keyframes rainbowWave {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        .anim-rainbow { animation: rainbowWave 6s linear infinite; }
+
+        /* Draggable Sticker Styling */
+        .sticker-item {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            z-index: 40;
+            display: inline-block;
+            font-size: 2.5rem;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+            transition: transform 0.1s ease;
+        }
+        .sticker-item:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-brand-pink selection:text-white">
+
+    <!-- Screen Flash Overlay for TikTok style illumination -->
+    <div id="flash-screen" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"></div>
+
+    <!-- Header Section -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-pink to-brand-purple flex items-center justify-center text-xl font-bold shadow-lg shadow-brand-pink/30">
+                    📸
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-brand-pink via-brand-yellow to-brand-teal bg-clip-text text-transparent">
+                        RetroSnap Photobooth
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Foto Studio Aesthetic, Filter & Flash TikTok Multi-Warna</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openGalleryModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded-xl flex items-center gap-2 border border-slate-700 transition duration-200">
+                    <i class="fa-solid fa-images text-brand-pink"></i>
+                    <span>Galeri Saya (<span id="gallery-count">0</span>)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT CONTROL PANEL (Settings & Customizations) -->
+        <section class="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 flex flex-col gap-5 shadow-2xl backdrop-blur-xl h-fit">
+            
+            <!-- Tab Navigation -->
+            <div class="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-semibold">
+                <button onclick="switchTab('tab-camera')" id="btn-tab-camera" class="flex-1 py-2 rounded-xl transition bg-brand-pink text-white shadow-md">
+                    <i class="fa-solid fa-camera mr-1"></i> Kamera & Flash
+                </button>
+                <button onclick="switchTab('tab-frame')" id="btn-tab-frame" class="flex-1 py-2 text-slate-400 hover:text-slate-200 rounded-xl transition">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Bingkai & Tema
+                </button>
+                <button onclick="switchTab('tab-filters')" id="btn-tab-filters" class="flex-1 py-2 text-slate-400 hover:text-slate-200 rounded-xl transition">
+                    <i class="fa-solid fa-sliders mr-1"></i> Filter & Stiker
+                </button>
+            </div>
+
+            <!-- TAB 1: Kamera & TikTok Flash Settings -->
+            <div id="tab-camera" class="space-y-5">
+                
+                <!-- Camera Select & Mirror Toggle -->
+                <div class="space-y-3">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span><i class="fa-solid fa-video text-brand-teal mr-1"></i> Pengaturan Kamera</span>
+                        <span id="camera-facing-badge" class="text-[10px] bg-brand-teal/20 text-brand-teal px-2 py-0.5 rounded-full font-semibold">Depan (Auto Mirror)</span>
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="switchCameraFacing()" class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700 transition">
+                            <i class="fa-solid fa-rotate text-brand-yellow"></i> Ganti Kamera
+                        </button>
+                        <button id="toggle-mirror-btn" onclick="toggleManualMirror()" class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-slate-700 transition">
+                            <i class="fa-solid fa-arrows-left-right text-brand-pink"></i> Cermin: <span id="mirror-status-text">ON</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TikTok Screen Flash Settings -->
+                <div class="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-brand-yellow text-lg"></i>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-200">TikTok Screen Flash</h3>
+                                <p class="text-[11px] text-slate-400">Pencahayaan layar cerah kamera depan</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="flash-toggle" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-pink"></div>
+                        </label>
+                    </div>
+
+                    <!-- Flash Color Selector -->
+                    <div class="space-y-1.5 pt-1">
+                        <span class="text-xs text-slate-400">Pilihan Warna Flash TikTok:</span>
+                        <div class="grid grid-cols-3 gap-2" id="flash-color-presets">
+                            <button onclick="setFlashColor('#ffffff', 'Warm White')" class="flash-color-btn active p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-white shadow-sm"></span> White
+                            </button>
+                            <button onclick="setFlashColor('#ffb3c6', 'Soft Pink')" class="flash-color-btn p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#ffb3c6] shadow-sm"></span> Pink
+                            </button>
+                            <button onclick="setFlashColor('#ffd1a4', 'Warm Peach')" class="flash-color-btn p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#ffd1a4] shadow-sm"></span> Peach
+                            </button>
+                            <button onclick="setFlashColor('#a2d2ff', 'Cyber Blue')" class="flash-color-btn p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#a2d2ff] shadow-sm"></span> Cyber
+                            </button>
+                            <button onclick="setFlashColor('#e2afff', 'Lavender Violet')" class="flash-color-btn p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#e2afff] shadow-sm"></span> Violet
+                            </button>
+                            <button onclick="setFlashColor('#caffbf', 'Lime Glow')" class="flash-color-btn p-2 rounded-xl border border-slate-700 bg-slate-900 text-[11px] flex items-center gap-1.5 hover:border-brand-pink transition">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#caffbf] shadow-sm"></span> Lime
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Flash Intensity & Duration Slider -->
+                    <div class="grid grid-cols-2 gap-3 pt-2 text-xs">
+                        <div>
+                            <div class="flex justify-between text-slate-400 mb-1">
+                                <span>Kecerahan:</span>
+                                <span id="flash-brightness-val">100%</span>
+                            </div>
+                            <input type="range" id="flash-brightness" min="50" max="100" value="100" oninput="document.getElementById('flash-brightness-val').innerText = this.value + '%'" class="w-full accent-brand-pink bg-slate-800 rounded-lg h-2">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-slate-400 mb-1">
+                                <span>Durasi:</span>
+                                <span id="flash-duration-val">0.6s</span>
+                            </div>
+                            <input type="range" id="flash-duration" min="300" max="1500" step="100" value="600" oninput="document.getElementById('flash-duration-val').innerText = (this.value/1000).toFixed(1) + 's'" class="w-full accent-brand-pink bg-slate-800 rounded-lg h-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer & Sound Effects Settings -->
+                <div class="space-y-3">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-clock text-brand-purple"></i> Hitung Mundur & Audio
+                    </label>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setTimerSec(3)" class="timer-btn active py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-center transition">3 Detik</button>
+                        <button onclick="setTimerSec(5)" class="timer-btn py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-center transition">5 Detik</button>
+                        <button onclick="setTimerSec(10)" class="timer-btn py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-center transition">10 Detik</button>
+                    </div>
+
+                    <div class="flex items-center justify-between px-3 py-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                        <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-volume-high text-brand-pink mr-1.5"></i> Shutter Sound FX</span>
+                        <input type="checkbox" id="sound-toggle" checked class="w-4 h-4 accent-brand-pink rounded">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: Bingkai, Layout & Tema Lucu -->
+            <div id="tab-frame" class="space-y-5 hidden">
+                
+                <!-- Layout Selection -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Layout Photo Strip</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setLayout('strip-3')" class="layout-btn active p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                            <span class="text-base">📸</span> 3-Foto Strip Vertical
+                        </button>
+                        <button onclick="setLayout('strip-4')" class="layout-btn p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                            <span class="text-base">🎞️</span> 4-Foto Long Strip
+                        </button>
+                        <button onclick="setLayout('grid-2x2')" class="layout-btn p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                            <span class="text-base">🔳</span> 4-Foto Grid 2x2
+                        </button>
+                        <button onclick="setLayout('single-polaroid')" class="layout-btn p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2">
+                            <span class="text-base">🖼️</span> Single Polaroid
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cute Themes Presets -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tema Lucu & Estetik</label>
+                    <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                        <button onclick="setTheme('kawaii-pink')" class="p-2.5 rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🌸 Kawaii Pink</span> <span class="w-3 h-3 rounded-full bg-pink-400"></span>
+                        </button>
+                        <button onclick="setTheme('y2k-cyber')" class="p-2.5 rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>⚡ Y2K Cyber</span> <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+                        </button>
+                        <button onclick="setTheme('cute-bear')" class="p-2.5 rounded-xl border border-amber-600/30 bg-gradient-to-r from-amber-600/20 to-yellow-600/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🐾 Bear Paw</span> <span class="w-3 h-3 rounded-full bg-amber-600"></span>
+                        </button>
+                        <button onclick="setTheme('retro-film')" class="p-2.5 rounded-xl border border-neutral-700 bg-neutral-900 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🎞️ Retro Film</span> <span class="w-3 h-3 rounded-full bg-black"></span>
+                        </button>
+                        <button onclick="setTheme('neon-glow')" class="p-2.5 rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🔮 Neon Glow</span> <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                        </button>
+                        <button onclick="setTheme('party-confetti')" class="p-2.5 rounded-xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/20 to-red-500/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🎉 Confetti</span> <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                        </button>
+                        <button onclick="setTheme('strawberry')" class="p-2.5 rounded-xl border border-rose-500/30 bg-gradient-to-r from-rose-500/20 to-red-400/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🍓 Shortcake</span> <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                        </button>
+                        <button onclick="setTheme('matcha-latte')" class="p-2.5 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-xs font-semibold text-left flex items-center justify-between hover:scale-[1.02] transition">
+                            <span>🍵 Matcha Latte</span> <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Patterns & Animated Frame Effects -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Pola Frame</label>
+                        <select id="frame-pattern-select" onchange="setFramePattern(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs font-semibold">
+                            <option value="none">Polos / Solid</option>
+                            <option value="pattern-polka">Polkadot</option>
+                            <option value="pattern-checkered">Papan Catur</option>
+                            <option value="pattern-stripes">Garis Diagonal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Animasi Frame</label>
+                        <select id="frame-anim-select" onchange="setFrameAnimation(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs font-semibold">
+                            <option value="none">Tanpa Animasi</option>
+                            <option value="anim-pulse">Pulse Glow</option>
+                            <option value="anim-float">Float Bounce</option>
+                            <option value="anim-rainbow">Rainbow Wave</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Text Header & Stamp Font -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kustomisasi Teks Header/Footer</label>
+                    <input type="text" id="frame-custom-text" value="RetroSnap ✨ Photobooth" oninput="updateFrameText()" placeholder="Ketik teks kustom..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand-pink">
+                    <div class="flex gap-2">
+                        <select id="frame-font-select" onchange="updateFrameFont(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs font-semibold">
+                            <option value="font-fredoka">Font: Fredoka (Cute)</option>
+                            <option value="font-caveat">Font: Caveat (Handwritten)</option>
+                            <option value="font-vt323">Font: VT323 (Retro Pixel)</option>
+                            <option value="font-sans">Font: Modern Sans</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 3: Filter & Interactive Stickers -->
+            <div id="tab-filters" class="space-y-5 hidden">
+                
+                <!-- Real-time Camera Filters -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Filter Kamera Real-time</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="setFilter('normal')" class="filter-btn active p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Normal</button>
+                        <button onclick="setFilter('vintage')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Vintage</button>
+                        <button onclick="setFilter('bw')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">B & W</button>
+                        <button onclick="setFilter('cyberpunk')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Cyberpunk</button>
+                        <button onclick="setFilter('warm')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Warm Sun</button>
+                        <button onclick="setFilter('cool')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Cool Blue</button>
+                        <button onclick="setFilter('softglow')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Soft Glow</button>
+                        <button onclick="setFilter('retrofilm')" class="filter-btn p-2 bg-slate-800 border border-slate-700 rounded-xl text-[11px] font-semibold text-center">Retro Film</button>
+                    </div>
+                </div>
+
+                <!-- Manual Adjustments Slider -->
+                <div class="space-y-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-xs">
+                    <label class="font-bold text-slate-300">Manual Retouch Adjustment</label>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Kecerahan (Brightness)</span>
+                            <span id="val-brightness">100%</span>
+                        </div>
+                        <input type="range" id="adj-brightness" min="50" max="150" value="100" oninput="updateRetouch()" class="w-full accent-brand-pink bg-slate-800 rounded-lg h-1.5">
+
+                        <div class="flex justify-between text-slate-400">
+                            <span>Kontras (Contrast)</span>
+                            <span id="val-contrast">100%</span>
+                        </div>
+                        <input type="range" id="adj-contrast" min="50" max="150" value="100" oninput="updateRetouch()" class="w-full accent-brand-pink bg-slate-800 rounded-lg h-1.5">
+
+                        <div class="flex justify-between text-slate-400">
+                            <span>Saturasi Warna</span>
+                            <span id="val-saturate">100%</span>
+                        </div>
+                        <input type="range" id="adj-saturate" min="0" max="200" value="100" oninput="updateRetouch()" class="w-full accent-brand-pink bg-slate-800 rounded-lg h-1.5">
+                    </div>
+                </div>
+
+                <!-- Interactive Stickers -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Stiker Lucu (Klik untuk tempel)</label>
+                        <button onclick="clearAllStickers()" class="text-[11px] text-rose-400 hover:underline">Hapus Semua</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 p-2 bg-slate-950 rounded-2xl border border-slate-800 text-2xl">
+                        <button onclick="addSticker('🎀')" class="hover:scale-125 transition">🎀</button>
+                        <button onclick="addSticker('💖')" class="hover:scale-125 transition">💖</button>
+                        <button onclick="addSticker('✨')" class="hover:scale-125 transition">✨</button>
+                        <button onclick="addSticker('👑')" class="hover:scale-125 transition">👑</button>
+                        <button onclick="addSticker('🧸')" class="hover:scale-125 transition">🧸</button>
+                        <button onclick="addSticker('🌸')" class="hover:scale-125 transition">🌸</button>
+                        <button onclick="addSticker('🕶️')" class="hover:scale-125 transition">🕶️</button>
+                        <button onclick="addSticker('🐱')" class="hover:scale-125 transition">🐱</button>
+                        <button onclick="addSticker('⭐')" class="hover:scale-125 transition">⭐</button>
+                        <button onclick="addSticker('🔥')" class="hover:scale-125 transition">🔥</button>
+                        <button onclick="addSticker('🍓')" class="hover:scale-125 transition">🍓</button>
+                        <button onclick="addSticker('🍬')" class="hover:scale-125 transition">🍬</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- RIGHT CAMERA VIEWPORT & PHOTO STRIP PREVIEW -->
+        <section class="lg:col-span-8 flex flex-col items-center justify-center gap-6">
+            
+            <!-- Live Camera Viewport Container -->
+            <div id="camera-container" class="relative w-full max-w-lg aspect-[4/3] bg-slate-900 rounded-3xl overflow-hidden border-2 border-slate-800 shadow-2xl flex items-center justify-center">
+                
+                <!-- Video Stream Element -->
+                <video id="webcam" autoplay playsinline class="w-full h-full object-cover mirror-mode"></video>
+
+                <!-- Sticker Overlay Layer -->
+                <div id="sticker-layer" class="absolute inset-0 pointer-events-auto overflow-hidden"></div>
+
+                <!-- Live Countdown Overlay Screen -->
+                <div id="countdown-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm hidden flex-col items-center justify-center z-20">
+                    <span id="countdown-number" class="text-9xl font-black text-brand-pink drop-shadow-[0_10px_20px_rgba(255,112,166,0.8)] animate-ping">3</span>
+                    <span id="countdown-subtext" class="text-xl font-bold text-white mt-4 tracking-widest uppercase">SIAP-SIAP!</span>
+                </div>
+
+                <!-- Frame Props Corner Decorators -->
+                <div id="corner-props" class="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between z-10 text-xl">
+                    <div class="flex justify-between">
+                        <span class="animate-bounce">✨</span>
+                        <span class="animate-bounce">🌸</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="animate-bounce">🎀</span>
+                        <span class="animate-bounce">✨</span>
+                    </div>
+                </div>
+
+                <!-- Photo Pose Counter Badge -->
+                <div class="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/80 text-xs font-bold text-slate-200 z-10 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span>Pose: <span id="current-pose-num">1</span> / <span id="total-pose-num">3</span></span>
+                </div>
+            </div>
+
+            <!-- Capture Trigger Action Bar -->
+            <div class="flex items-center gap-4 w-full max-w-lg">
+                <button id="start-session-btn" onclick="startPhotoSession()" class="flex-1 py-4 px-6 bg-gradient-to-r from-brand-pink via-brand-purple to-brand-teal text-white rounded-2xl font-bold text-lg shadow-xl shadow-brand-pink/25 hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-camera-retro text-2xl"></i>
+                    <span>AMBIL FOTO (<span id="btn-pose-count">3</span> POSE)</span>
+                </button>
+            </div>
+
+            <!-- Photo Strip Final Result Preview Section -->
+            <div id="result-section" class="w-full max-w-md hidden flex-col items-center gap-4 bg-slate-900/90 border border-slate-800 p-6 rounded-3xl shadow-2xl">
+                <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-square-check text-emerald-400"></i> Hasil Photo Strip Kamu
+                </h3>
+
+                <!-- Rendered Photo Strip Canvas / Container -->
+                <div id="photostrip-render-wrapper" class="p-4 bg-pink-100 rounded-2xl shadow-xl text-slate-800 w-full flex flex-col items-center gap-3 transition-all duration-300">
+                    
+                    <div id="photostrip-header" class="text-center w-full font-bold text-sm tracking-wider uppercase font-fredoka pt-1">
+                        RetroSnap ✨ Photobooth
+                    </div>
+
+                    <!-- Images Grid Container -->
+                    <div id="photostrip-photos" class="w-full flex flex-col gap-3">
+                        <!-- Dynamic photo slots added here -->
+                    </div>
+
+                    <div id="photostrip-footer" class="text-center w-full text-xs font-semibold opacity-75 flex items-center justify-between px-2 pt-1">
+                        <span id="stamp-date">2026.10.15</span>
+                        <span class="text-[10px] uppercase font-bold">LIMITED EDITION</span>
+                    </div>
+                </div>
+
+                <!-- Result Actions (Download, Print, QR Code) -->
+                <div class="grid grid-cols-3 gap-2 w-full pt-2">
+                    <button onclick="downloadPhotoStrip()" class="py-2.5 px-3 bg-brand-pink hover:bg-pink-600 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-download"></i> Unduh
+                    </button>
+                    <button onclick="printPhotoStrip()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                        <i class="fa-solid fa-print"></i> Cetak
+                    </button>
+                    <button onclick="generateQRCodeModal()" class="py-2.5 px-3 bg-brand-purple hover:bg-purple-600 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-qrcode"></i> QR HP
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal QR Code -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-sm w-full flex flex-col items-center text-center space-y-4 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-100"><i class="fa-solid fa-mobile-screen-button text-brand-teal mr-2"></i>Scan & Simpan ke HP</h3>
+            <p class="text-xs text-slate-400">Arahkan kamera ponsel kamu untuk membuka dan menyimpan photo strip ini secara instan!</p>
+            
+            <div class="p-4 bg-white rounded-2xl shadow-inner flex items-center justify-center" id="qrcode-target"></div>
+
+            <div class="w-full bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 truncate" id="qr-url-text">
+                Generasi URL...
+            </div>
+
+            <button onclick="closeModal('qr-modal')" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-xs border border-slate-700 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Gallery -->
+    <div id="gallery-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-2xl w-full flex flex-col gap-4 shadow-2xl max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-images text-brand-pink"></i> Galeri Foto Sesi Ini
+                </h3>
+                <button onclick="closeModal('gallery-modal')" class="text-slate-400 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto p-1 flex-grow">
+                <!-- Gallery Item Elements -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-900 py-3 text-center text-xs text-slate-500">
+        RetroSnap Photobooth &copy; 2026 - TikTok Flash, Auto Mirror & Aesthetic Filters
+    </footer>
+
+    <!-- Hidden Canvas for Composite rendering & Snapshotting -->
+    <canvas id="hidden-canvas" class="hidden"></canvas>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let videoStream = null;
+        let facingMode = 'user'; // 'user' (front) or 'environment' (back)
+        let isManualMirror = true;
+        let timerSeconds = 3;
+        let currentLayout = 'strip-3';
+        let requiredPoses = 3;
+        let capturedPhotos = [];
+        let galleryStorage = [];
+        let currentFilter = 'normal';
+        let flashColor = '#ffffff';
+        let currentTheme = 'kawaii-pink';
+        let audioCtx = null;
+
+        // Theme Definitions
+        const themeStyles = {
+            'kawaii-pink': { bg: 'bg-pink-200', text: 'text-pink-900', border: 'border-pink-300' },
+            'y2k-cyber': { bg: 'bg-cyan-950 text-cyan-200', text: 'text-cyan-400', border: 'border-cyan-500' },
+            'cute-bear': { bg: 'bg-amber-100', text: 'text-amber-900', border: 'border-amber-300' },
+            'retro-film': { bg: 'bg-neutral-900', text: 'text-amber-100', border: 'border-neutral-800' },
+            'neon-glow': { bg: 'bg-purple-950 text-purple-200', text: 'text-purple-300', border: 'border-purple-500' },
+            'party-confetti': { bg: 'bg-yellow-100', text: 'text-yellow-900', border: 'border-yellow-300' },
+            'strawberry': { bg: 'bg-rose-100', text: 'text-rose-900', border: 'border-rose-300' },
+            'matcha-latte': { bg: 'bg-emerald-100', text: 'text-emerald-900', border: 'border-emerald-300' }
+        };
+
+        // Initialize Web Camera on Load
+        window.onload = function() {
+            initCamera();
+            updateDateStamp();
+            initAudioContext();
+        };
+
+        // Web Audio API Shutter Sound Synthesizer
+        function initAudioContext() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log("Web Audio API not supported.");
+            }
+        }
+
+        function playShutterSound() {
+            if (!document.getElementById('sound-toggle').checked || !audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // Initialize Camera with Facing Mode
+        async function initCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 960 }
+                },
+                audio: false
+            };
+
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoEl = document.getElementById('webcam');
+                videoEl.srcObject = videoStream;
+
+                // Auto Mirroring Logic
+                const cameraBadge = document.getElementById('camera-facing-badge');
+                if (facingMode === 'user') {
+                    // Front camera: Mirror by default
+                    isManualMirror = true;
+                    videoEl.classList.add('mirror-mode');
+                    cameraBadge.innerText = 'Depan (Auto Mirror)';
+                    cameraBadge.className = 'text-[10px] bg-brand-teal/20 text-brand-teal px-2 py-0.5 rounded-full font-semibold';
+                } else {
+                    // Back camera: DO NOT mirror so text/direction isn't reversed
+                    isManualMirror = false;
+                    videoEl.classList.remove('mirror-mode');
+                    cameraBadge.innerText = 'Belakang (Normal)';
+                    cameraBadge.className = 'text-[10px] bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full font-semibold';
+                }
+                document.getElementById('mirror-status-text').innerText = isManualMirror ? 'ON' : 'OFF';
+
+            } catch (err) {
+                console.error("Camera access error:", err);
+            }
+        }
+
+        // Switch Camera Facing (Front / Back)
+        function switchCameraFacing() {
+            facingMode = (facingMode === 'user') ? 'environment' : 'user';
+            initCamera();
+        }
+
+        // Toggle Manual Mirror
+        function toggleManualMirror() {
+            isManualMirror = !isManualMirror;
+            const videoEl = document.getElementById('webcam');
+            if (isManualMirror) {
+                videoEl.classList.add('mirror-mode');
+                document.getElementById('mirror-status-text').innerText = 'ON';
+            } else {
+                videoEl.classList.remove('mirror-mode');
+                document.getElementById('mirror-status-text').innerText = 'OFF';
+            }
+        }
+
+        // TikTok Screen Flash Settings
+        function setFlashColor(colorHex, name) {
+            flashColor = colorHex;
+            document.querySelectorAll('.flash-color-btn').forEach(btn => btn.classList.remove('border-brand-pink', 'ring-2', 'ring-brand-pink'));
+            event.currentTarget.classList.add('border-brand-pink', 'ring-2', 'ring-brand-pink');
+        }
+
+        function triggerTikTokFlash() {
+            return new Promise(resolve => {
+                const flashToggle = document.getElementById('flash-toggle').checked;
+                if (!flashToggle) {
+                    resolve();
+                    return;
+                }
+
+                const flashEl = document.getElementById('flash-screen');
+                const brightness = document.getElementById('flash-brightness').value / 100;
+                const duration = parseInt(document.getElementById('flash-duration').value);
+
+                flashEl.style.backgroundColor = flashColor;
+                flashEl.style.opacity = brightness;
+
+                setTimeout(() => {
+                    flashEl.style.opacity = '0';
+                    resolve();
+                }, duration);
+            });
+        }
+
+        // Tab Navigation Switch
+        function switchTab(tabId) {
+            ['tab-camera', 'tab-frame', 'tab-filters'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById('btn-' + id).classList.remove('bg-brand-pink', 'text-white', 'shadow-md');
+                document.getElementById('btn-' + id).classList.add('text-slate-400');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById('btn-' + tabId).classList.add('bg-brand-pink', 'text-white', 'shadow-md');
+            document.getElementById('btn-' + tabId).classList.remove('text-slate-400');
+        }
+
+        // Layout Control
+        function setLayout(layoutType) {
+            currentLayout = layoutType;
+            document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active', 'border-brand-pink', 'bg-slate-800/80'));
+            event.currentTarget.classList.add('active', 'border-brand-pink');
+
+            if (layoutType === 'strip-3') requiredPoses = 3;
+            else if (layoutType === 'strip-4' || layoutType === 'grid-2x2') requiredPoses = 4;
+            else if (layoutType === 'single-polaroid') requiredPoses = 1;
+
+            document.getElementById('total-pose-num').innerText = requiredPoses;
+            document.getElementById('btn-pose-count').innerText = requiredPoses;
+        }
+
+        // Timer Control
+        function setTimerSec(sec) {
+            timerSeconds = sec;
+            document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active', 'bg-brand-pink', 'text-white'));
+            event.currentTarget.classList.add('active', 'bg-brand-pink', 'text-white');
+        }
+
+        // Theme Control
+        function setTheme(themeKey) {
+            currentTheme = themeKey;
+            const theme = themeStyles[themeKey];
+            const renderWrapper = document.getElementById('photostrip-render-wrapper');
+            
+            // Reset background classes
+            renderWrapper.className = `p-4 rounded-2xl shadow-xl w-full flex flex-col items-center gap-3 transition-all duration-300 ${theme.bg} ${theme.border} border-2`;
+            document.getElementById('photostrip-header').className = `text-center w-full font-bold text-sm tracking-wider uppercase font-fredoka pt-1 ${theme.text}`;
+            document.getElementById('photostrip-footer').className = `text-center w-full text-xs font-semibold opacity-75 flex items-center justify-between px-2 pt-1 ${theme.text}`;
+        }
+
+        // Filter Controls
+        function setFilter(filterName) {
+            currentFilter = filterName;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'bg-brand-pink', 'text-white'));
+            event.currentTarget.classList.add('active', 'bg-brand-pink', 'text-white');
+            updateRetouch();
+        }
+
+        function updateRetouch() {
+            const bright = document.getElementById('adj-brightness').value;
+            const contrast = document.getElementById('adj-contrast').value;
+            const saturate = document.getElementById('adj-saturate').value;
+
+            document.getElementById('val-brightness').innerText = bright + '%';
+            document.getElementById('val-contrast').innerText = contrast + '%';
+            document.getElementById('val-saturate').innerText = saturate + '%';
+
+            let filterCss = `brightness(${bright}%) contrast(${contrast}%) saturate(${saturate}%) `;
+
+            switch(currentFilter) {
+                case 'vintage': filterCss += 'sepia(0.5) hue-rotate(-10deg)'; break;
+                case 'bw': filterCss += 'grayscale(1)'; break;
+                case 'cyberpunk': filterCss += 'hue-rotate(180deg) saturate(1.8)'; break;
+                case 'warm': filterCss += 'sepia(0.3) saturate(1.3)'; break;
+                case 'cool': filterCss += 'hue-rotate(30deg) saturate(1.1)'; break;
+                case 'softglow': filterCss += 'brightness(1.1) contrast(0.9)'; break;
+                case 'retrofilm': filterCss += 'contrast(1.2) sepia(0.2)'; break;
+            }
+
+            document.getElementById('webcam').style.filter = filterCss;
+        }
+
+        // Frame Patterns & Animations
+        function setFramePattern(pattern) {
+            const wrapper = document.getElementById('photostrip-render-wrapper');
+            wrapper.classList.remove('pattern-polka', 'pattern-checkered', 'pattern-stripes');
+            if (pattern !== 'none') wrapper.classList.add(pattern);
+        }
+
+        function setFrameAnimation(anim) {
+            const wrapper = document.getElementById('photostrip-render-wrapper');
+            wrapper.classList.remove('anim-pulse', 'anim-float', 'anim-rainbow');
+            if (anim !== 'none') wrapper.classList.add(anim);
+        }
+
+        function updateFrameText() {
+            document.getElementById('photostrip-header').innerText = document.getElementById('frame-custom-text').value;
+        }
+
+        function updateFrameFont(fontClass) {
+            const header = document.getElementById('photostrip-header');
+            header.classList.remove('font-fredoka', 'font-caveat', 'font-vt323', 'font-sans');
+            header.classList.add(fontClass);
+        }
+
+        // Sticker Interaction Logic
+        function addSticker(emoji) {
+            const layer = document.getElementById('sticker-layer');
+            const sticker = document.createElement('div');
+            sticker.className = 'sticker-item';
+            sticker.innerText = emoji;
+            sticker.style.left = '40%';
+            sticker.style.top = '40%';
+
+            // Touch & Mouse Dragging
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            const startDrag = (e) => {
+                isDragging = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startX = clientX;
+                startY = clientY;
+                initialLeft = sticker.offsetLeft;
+                initialTop = sticker.offsetTop;
+            };
+
+            const moveDrag = (e) => {
+                if (!isDragging) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                sticker.style.left = `${initialLeft + (clientX - startX)}px`;
+                sticker.style.top = `${initialTop + (clientY - startY)}px`;
+            };
+
+            const stopDrag = () => { isDragging = false; };
+
+            sticker.addEventListener('mousedown', startDrag);
+            sticker.addEventListener('touchstart', startDrag);
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('touchmove', moveDrag);
+            window.addEventListener('mouseup', stopDrag);
+            window.addEventListener('touchend', stopDrag);
+
+            // Double click to remove
+            sticker.addEventListener('dblclick', () => sticker.remove());
+
+            layer.appendChild(sticker);
+        }
+
+        function clearAllStickers() {
+            document.getElementById('sticker-layer').innerHTML = '';
+        }
+
+        // Photo Session Sequence
+        async function startPhotoSession() {
+            capturedPhotos = [];
+            document.getElementById('start-session-btn').disabled = true;
+            document.getElementById('result-section').classList.add('hidden');
+
+            for (let i = 1; i <= requiredPoses; i++) {
+                document.getElementById('current-pose-num').innerText = i;
+                await runCountdown(timerSeconds);
+                await triggerTikTokFlash();
+                playShutterSound();
+                captureSnapshot();
+                await new Promise(r => setTimeout(r, 800)); // Pause between photos
+            }
+
+            renderPhotoStrip();
+            document.getElementById('start-session-btn').disabled = false;
+        }
+
+        function runCountdown(sec) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('countdown-overlay');
+                const numEl = document.getElementById('countdown-number');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+
+                let count = sec;
+                numEl.innerText = count;
+
+                const interval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        numEl.innerText = count;
+                    } else {
+                        clearInterval(interval);
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('flex');
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        // Capture Snapshot from Video Stream to DataURL
+        function captureSnapshot() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('hidden-canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+
+            ctx.save();
+            // Handle Horizontal Mirror flip on captured image if mirror is active
+            if (isManualMirror) {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+
+            // Apply filter CSS to canvas
+            ctx.filter = video.style.filter || 'none';
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            capturedPhotos.push(canvas.toDataURL('image/jpeg', 0.9));
+        }
+
+        // Render Photo Strip Layout
+        function renderPhotoStrip() {
+            const container = document.getElementById('photostrip-photos');
+            container.innerHTML = '';
+
+            if (currentLayout === 'grid-2x2') {
+                container.className = 'w-full grid grid-cols-2 gap-2';
+            } else {
+                container.className = 'w-full flex flex-col gap-2.5';
+            }
+
+            capturedPhotos.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'w-full h-auto rounded-lg shadow-sm border border-black/10 object-cover';
+                container.appendChild(img);
+            });
+
+            document.getElementById('result-section').classList.remove('hidden');
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+
+            // Add to session gallery
+            galleryStorage.push(capturedPhotos);
+            document.getElementById('gallery-count').innerText = galleryStorage.length;
+        }
+
+        function updateDateStamp() {
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+            document.getElementById('stamp-date').innerText = dateStr;
+        }
+
+        // Download Photo Strip via HTML5 Canvas Composite
+        function downloadPhotoStrip() {
+            const wrapper = document.getElementById('photostrip-render-wrapper');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const width = 600;
+            const photoHeight = 400;
+            const photoPadding = 30;
+            const headerHeight = 80;
+            const footerHeight = 60;
+
+            const numPhotos = capturedPhotos.length;
+            const totalHeight = headerHeight + footerHeight + (numPhotos * photoHeight) + ((numPhotos + 1) * photoPadding);
+
+            canvas.width = width;
+            canvas.height = totalHeight;
+
+            // Fill Background
+            ctx.fillStyle = getComputedStyle(wrapper).backgroundColor || '#ffffff';
+            ctx.fillRect(0, 0, width, totalHeight);
+
+            // Header Text
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 28px Fredoka, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(document.getElementById('frame-custom-text').value, width / 2, 50);
+
+            // Render Photos
+            let loadedCount = 0;
+            capturedPhotos.forEach((src, idx) => {
+                const img = new Image();
+                img.onload = () => {
+                    const yPos = headerHeight + photoPadding + idx * (photoHeight + photoPadding);
+                    ctx.drawImage(img, photoPadding, yPos, width - (photoPadding * 2), photoHeight);
+                    loadedCount++;
+
+                    if (loadedCount === numPhotos) {
+                        // Footer Text
+                        ctx.font = '600 18px Plus Jakarta Sans, sans-serif';
+                        ctx.fillText(document.getElementById('stamp-date').innerText, width / 2, totalHeight - 25);
+
+                        // Trigger Download
+                        const link = document.createElement('a');
+                        link.download = `RetroSnap-${Date.now()}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }
+                };
+                img.src = src;
+            });
+        }
+
+        // Print Photo Strip
+        function printPhotoStrip() {
+            window.print();
+        }
+
+        // QR Code Generator Modal
+        function generateQRCodeModal() {
+            const qrTarget = document.getElementById('qrcode-target');
+            qrTarget.innerHTML = '';
+            
+            // Generate Data URL Viewer link or Fallback URL
+            const dummyPhotoUrl = window.location.href;
+            
+            new QRCode(qrTarget, {
+                text: dummyPhotoUrl,
+                width: 160,
+                height: 160,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qr-url-text').innerText = dummyPhotoUrl;
+            document.getElementById('qr-modal').classList.remove('hidden');
+        }
+
+        // Open Session Gallery Modal
+        function openGalleryModal() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+
+            if (galleryStorage.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-8 text-xs">Belum ada foto yang diambil disesi ini.</p>';
+            } else {
+                galleryStorage.forEach((photos, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-950 p-2 rounded-xl border border-slate-800 flex flex-col gap-1.5';
+                    card.innerHTML = `
+                        <img src="${photos[0]}" class="w-full h-24 object-cover rounded-lg">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 px-1">
+                            <span>Sesi #${idx + 1} (${photos.length} Foto)</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            document.getElementById('gallery-modal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
